@@ -1,0 +1,160 @@
+/* Container for the entire page */
+.monitor-field-page {
+  padding: 20px;
+  font-family: Arial, sans-serif;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Page title */
+.page-title {
+  font-size: 28px;
+  margin-bottom: 20px;
+  font-weight: bold;
+  color: #333;
+  border-bottom: 2px solid #ddd;
+  padding-bottom: 10px;
+}
+
+/* Wrapper for columns */
+.content-wrapper {
+  display: flex;
+  gap: 20px;
+}
+
+/* Left column: Map */
+.map-section {
+  flex: 2;
+}
+
+/* The map container */
+.map-container {
+  height: 600px; /* Increased height for better visibility */
+  width: 100%;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Right column: side panel */
+.side-panel {
+  flex: 1;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 16px;
+  min-width: 300px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Panel content spacing */
+.panel-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Sub-title inside panel */
+.side-panel h3 {
+  font-size: 20px;
+  margin-bottom: 8px;
+  color: #444;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 5px;
+}
+
+/* Date input container */
+.date-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.date-inputs label {
+  font-size: 14px;
+  color: #555;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Input fields */
+.date-inputs input[type="date"] {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  margin-top: 4px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.date-inputs input[type="date"]:focus {
+  border-color: #4caf50;
+}
+
+/* Generate button */
+.generate-btn {
+  padding: 10px 16px;
+  background-color: #4caf50;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.1s;
+  margin-top: 8px;
+}
+
+.generate-btn:hover {
+  background-color: #45a049;
+  transform: translateY(-1px);
+}
+
+.generate-btn:disabled {
+  background-color: #aaa;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Error message */
+.error-message {
+  color: red;
+  font-size: 14px;
+  margin-top: 5px;
+  font-weight: bold;
+}
+
+/* Legend card styling */
+.legend-card {
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 12px;
+  background-color: #fafafa;
+}
+
+.legend-card h4 {
+  margin-bottom: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.legend-bar {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 6px;
+}
+
+.legend-stop {
+  flex: 1;
+  text-align: center;
+  font-size: 12px;
+  color: #000;
+  padding: 4px 0;
+}
+
+.legend-info {
+  font-size: 12px;
+  color: #666;
+  line-height: 1.4;
+}

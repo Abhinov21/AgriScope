@@ -1,0 +1,89 @@
+/* Navbar container */
+.navbar {
+    background-color: #0a3d62; /* Dark blue */
+    padding: 15px 20px;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  
+  /* Logo styling */
+  .navbar .logo {
+    font-size: 28px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #38ada9; /* Sea green */
+  }
+  
+  /* Unordered list for navigation links */
+  .navbar ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex: 2;
+  }
+  
+  /* List item styling */
+  .navbar ul li {
+    display: inline-block;
+  }
+  
+  /* Link styling */
+  .navbar ul li a {
+    color: white;
+    text-decoration: none;
+    padding: 10px 15px;
+    font-size: 16px;
+    transition: background-color 0.3s, color 0.3s;
+  }
+  
+  .navbar ul li a:hover {
+    background-color: #3c6382; /* Lighter blue on hover */
+    color: white;
+    border-radius: 5px;
+  }
+  
+  /* Button styling for Logout */
+  .navbar .nav-link {
+    color: white;
+    background-color: #079992; /* Greenish tone */
+    border: none;
+    padding: 10px 15px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+  }
+  
+  .navbar .nav-link:hover {
+    background-color: #38ada9; /* Bright green on hover */
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .navbar ul {
+      flex-direction: column;
+      gap: 10px;
+    }
+  
+    .navbar ul li {
+      text-align: center;
+    }
+  
+    .navbar .logo {
+      flex: 1 100%;
+      text-align: center;
+    }
+  
+    .navbar .nav-link {
+      width: 100%;
+      text-align: center;
+    }
+  }
+  
