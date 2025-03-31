@@ -1,0 +1,58 @@
+.analysis-container {
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    background: white;
+  }
+  
+  .analysis-container h2 {
+    text-align: center;
+    color: #333;
+  }
+  
+  label {
+    font-size: 18px;
+    margin-bottom: 8px;
+    display: block;
+  }
+  
+  select {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+  }
+  
+  .crop-info {
+    background: #f9f9f9;
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 15px;
+  }
+  
+  .pros-cons {
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .pros, .cons {
+    width: 45%;
+  }
+  
+  h4 {
+    color: #333;
+  }
+  
+  ul {
+    list-style: none;
+    padding: 0;
+  }
+  
+  li {
+    margin: 5px 0;
+    font-size: 16px;
+  }
+  

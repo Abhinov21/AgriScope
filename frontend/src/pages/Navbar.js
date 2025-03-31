@@ -35,7 +35,7 @@ const Navbar = () => {
         <li><Link to="/contact">Contact</Link></li>
         <React.Fragment>
           <li><Link to="/monitor-field">Monitor Field</Link></li>
-          <li><Link to="/crop-suggestions">Crop Suggestions</Link></li>
+          <li><Link to="/requirements">Crop Suggestions</Link></li>
         </React.Fragment>
         <React.Fragment>
           <li><Link to="/data-analysis">Data Analysis</Link></li>

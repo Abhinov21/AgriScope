@@ -1,4 +1,4 @@
-import Navbar from './Navbar';
+
 import React, { useState, useEffect } from "react";
 import '../styles/homepage.css';
 
@@ -13,7 +13,6 @@ const Homepage = () => {
 
   return (
     <div>
-       <Navbar />
     <div className="homepage-container">
      
       
