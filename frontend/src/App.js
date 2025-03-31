@@ -1,28 +1,37 @@
 import React from "react";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom"; 
-import Navbar from "./pages/Navbar";  // Import Navbar
+import { BrowserRouter as Router, Route, Routes, useLocation, Navigate } from "react-router-dom";
+import Navbar from "./pages/Navbar"; 
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Homepage from "./pages/Homepage";
 import MonitorField from "./pages/MonitorField";
-import RequirementsForm from "./pages/RequirementsForm"; // Import the new page
+import RequirementsForm from "./pages/RequirementsForm";
 import DataAnalysis from "./pages/DataAnalysis";
+
+const Layout = () => {
+  const location = useLocation();
+  const hideNavbar = location.pathname === "/login" || location.pathname === "/register";
+
+  return (
+    <>
+      {!hideNavbar && <Navbar />}
+      <Routes>
+        <Route path="/" element={<Navigate to="/login" />} /> {/* Redirect "/" to "/login" */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/homepage" element={<Homepage />} />
+        <Route path="/monitor-field" element={<MonitorField />} />
+        <Route path="/requirements" element={<RequirementsForm />} />
+        <Route path="/data-analysis" element={<DataAnalysis />} />
+      </Routes>
+    </>
+  );
+};
 
 function App() {
   return (
     <Router>
-      <div>
-        <Navbar />  {/* Add Navbar to be visible on all pages */}
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/homepage" element={<Homepage />} />
-          <Route path="/monitor-field" element={<MonitorField />} />
-          <Route path="/requirements" element={<RequirementsForm />} />
-          <Route path="/Data-analysis" element={<DataAnalysis />} /> {/* Add this route */}
-          <Route path="/" element={<Login />} />
-        </Routes>
-      </div>
+      <Layout />
     </Router>
   );
 }
