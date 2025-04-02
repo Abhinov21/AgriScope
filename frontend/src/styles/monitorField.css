@@ -1,160 +1,274 @@
+/* Modern CSS Variables for consistent theming */
+:root {
+  --primary: #2dd4bf;
+  --primary-dark: #0f766e;
+  --secondary: #4f46e5;
+  --secondary-dark: #3730a3;
+  --success: #10b981;
+  --background: #f8fafc;
+  --panel-bg: rgba(255, 255, 255, 0.8);
+  --text-primary: #1e293b;
+  --text-secondary: #475569;
+  --border-radius: 12px;
+  --box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  --transition: all 0.3s ease;
+  --border-light: 1px solid rgba(226, 232, 240, 0.8);
+  --font-primary: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Base styling */
+body {
+  background-color: var(--background);
+  color: var(--text-primary);
+  font-family: var(--font-primary);
+}
+
 /* Container for the entire page */
 .monitor-field-page {
-  padding: 20px;
-  font-family: Arial, sans-serif;
-  max-width: 1200px;
+  padding: 24px;
+  font-family: var(--font-primary);
+  max-width: 1400px;
   margin: 0 auto;
+  background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 100%);
+  border-radius: var(--border-radius);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--box-shadow);
+  animation: fadeIn 0.4s ease-out;
 }
 
-/* Page title */
+/* Page title with modern styling */
 .page-title {
-  font-size: 28px;
-  margin-bottom: 20px;
-  font-weight: bold;
-  color: #333;
-  border-bottom: 2px solid #ddd;
-  padding-bottom: 10px;
+  font-size: 2rem;
+  margin-bottom: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  border-bottom: none;
+  padding-bottom: 12px;
+  position: relative;
+  letter-spacing: -0.02em;
 }
 
-/* Wrapper for columns */
+.page-title::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: 60px;
+  background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+  border-radius: 3px;
+}
+
+/* Layout: two-column flex container */
 .content-wrapper {
   display: flex;
-  gap: 20px;
+  gap: 24px;
+  height: calc(100vh - 180px);
 }
 
-/* Left column: Map */
-.map-section {
-  flex: 2;
-}
-
-/* The map container */
-.map-container {
-  height: 600px; /* Increased height for better visibility */
-  width: 100%;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-/* Right column: side panel */
+/* Sidebar with glassmorphism effect */
 .side-panel {
-  flex: 1;
-  background: #fff;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  padding: 16px;
-  min-width: 300px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  width: 320px;
+  background: var(--panel-bg);
+  border: var(--border-light);
+  border-radius: var(--border-radius);
+  padding: 24px;
+  overflow-y: auto;
+  box-shadow: var(--box-shadow);
+  backdrop-filter: blur(10px);
+  transition: var(--transition);
 }
 
-/* Panel content spacing */
-.panel-content {
+.side-panel:hover {
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+/* Map Section: fill remaining space */
+.map-section {
+  flex: 1;
+  min-height: 600px;
+}
+
+/* Map container with improved styling */
+.map-container {
+  height: 100%;
+  width: 100%;
+  border: var(--border-light);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  box-shadow: var(--box-shadow);
+  transition: var(--transition);
+}
+
+.map-container:hover {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+/* Popup container with glassmorphism */
+.popup-container {
+  margin-top: 24px;
+  padding: 0;
+  background: var(--panel-bg);
+  border: var(--border-light);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  backdrop-filter: blur(10px);
+  overflow: hidden;
+  transition: var(--transition);
+}
+
+/* Popup content styling */
+.popup-content {
+  position: relative;
+  padding: 24px;
+}
+
+/* Popup close button */
+.popup-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(226, 232, 240, 0.6);
+  border: none;
+  padding: 8px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: var(--transition);
+}
+
+.popup-close:hover {
+  background: rgba(226, 232, 240, 0.9);
+  transform: rotate(90deg);
+}
+
+/* Date inputs and buttons */
+.date-inputs {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-/* Sub-title inside panel */
-.side-panel h3 {
-  font-size: 20px;
-  margin-bottom: 8px;
-  color: #444;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 5px;
+input[type="date"] {
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: var(--border-light);
+  background: rgba(255, 255, 255, 0.8);
+  font-family: var(--font-primary);
+  transition: var(--transition);
 }
 
-/* Date input container */
-.date-inputs {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.date-inputs label {
-  font-size: 14px;
-  color: #555;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Input fields */
-.date-inputs input[type="date"] {
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  margin-top: 4px;
-  font-size: 14px;
+input[type="date"]:focus {
   outline: none;
-  transition: border-color 0.2s;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.2);
 }
 
-.date-inputs input[type="date"]:focus {
-  border-color: #4caf50;
-}
-
-/* Generate button */
-.generate-btn {
-  padding: 10px 16px;
-  background-color: #4caf50;
-  color: #fff;
+.generate-btn,
+.timeseries-btn {
+  padding: 14px 20px;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 15px;
-  cursor: pointer;
-  transition: background-color 0.3s, transform 0.1s;
-  margin-top: 8px;
-}
-
-.generate-btn:hover {
-  background-color: #45a049;
-  transform: translateY(-1px);
-}
-
-.generate-btn:disabled {
-  background-color: #aaa;
-  cursor: not-allowed;
-  transform: none;
-}
-
-/* Error message */
-.error-message {
-  color: red;
-  font-size: 14px;
-  margin-top: 5px;
-  font-weight: bold;
-}
-
-/* Legend card styling */
-.legend-card {
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  padding: 12px;
-  background-color: #fafafa;
-}
-
-.legend-card h4 {
-  margin-bottom: 8px;
-  font-size: 16px;
   font-weight: 600;
-  color: #333;
+  cursor: pointer;
+  margin-top: 12px;
+  width: 100%;
+  transition: var(--transition);
+  box-shadow: 0 4px 6px rgba(45, 212, 191, 0.2);
+  position: relative;
+  overflow: hidden;
 }
 
-.legend-bar {
+.generate-btn:hover,
+.timeseries-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(45, 212, 191, 0.3);
+}
+
+.generate-btn:active,
+.timeseries-btn:active {
+  transform: translateY(1px);
+}
+
+/* Button loading effect */
+.generate-btn::after,
+.timeseries-btn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  animation: shine 2s infinite;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.generate-btn:hover::after,
+.timeseries-btn:hover::after {
+  opacity: 1;
+}
+
+@keyframes shine {
+  to {
+    left: 100%;
+  }
+}
+
+.error-message {
+  color: #ef4444;
+  font-size: 14px;
+  margin-top: 8px;
+  font-weight: 500;
+  padding: 8px 12px;
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: 6px;
   display: flex;
-  gap: 2px;
-  margin-bottom: 6px;
+  align-items: center;
+  gap: 6px;
 }
 
-.legend-stop {
-  flex: 1;
-  text-align: center;
-  font-size: 12px;
-  color: #000;
-  padding: 4px 0;
+.error-message::before {
+  content: '⚠️';
 }
 
-.legend-info {
-  font-size: 12px;
-  color: #666;
-  line-height: 1.4;
+.legend-card {
+  border: var(--border-light);
+  border-radius: var(--border-radius);
+  padding: 16px;
+  background: var(--panel-bg);
+  margin-top: 20px;
+  backdrop-filter: blur(6px);
+  transition: var(--transition);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .content-wrapper {
+    flex-direction: column;
+    height: auto;
+  }
+  
+  .side-panel {
+    width: 100%;
+  }
+}
+
+/* Animation for page loading */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
