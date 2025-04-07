@@ -125,6 +125,40 @@ body {
 .popup-content {
   position: relative;
   padding: 24px;
+  max-width: 900px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+/* Popup tabs styling */
+.popup-tabs {
+  display: flex;
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 20px;
+}
+
+.popup-tab {
+  padding: 10px 20px;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.popup-tab:hover {
+  background-color: #f9f9f9;
+}
+
+.popup-tab.active {
+  border-bottom: 3px solid #2dd4bf;
+  color: #2dd4bf;
+}
+
+.ndvi-content, .weather-content {
+  padding: 10px;
 }
 
 /* Popup close button */

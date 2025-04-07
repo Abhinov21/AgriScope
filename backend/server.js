@@ -5,6 +5,7 @@ require("dotenv").config();
 
 const authRoutes = require("./routes/auth");
 const aoiRoutes = require("./routes/aoi");
+const weatherRoutes = require("./routes/weather");
 
 const app = express();
 const PORT = 5000;
@@ -16,6 +17,7 @@ app.use(bodyParser.json());
 // ✅ Routes
 app.use("/auth", authRoutes); // Authentication routes
 app.use("/api/fields", aoiRoutes); // AOI-related routes (Get/Post AOI data)
+app.use("/api/weather", weatherRoutes); // Weather-related routes
 
 // ✅ Start server
 app.listen(PORT, () => {

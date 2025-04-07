@@ -1,0 +1,81 @@
+/* src/styles/WeatherChart.css */
+.weather-charts {
+  width: 100%;
+  margin-top: 20px;
+}
+
+.weather-summary {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.weather-card {
+  background-color: #f9f9f9;
+  border-radius: 10px;
+  padding: 15px;
+  width: 30%;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  transition: transform 0.3s ease;
+}
+
+.weather-card:hover {
+  transform: translateY(-5px);
+}
+
+.weather-card h4 {
+  margin-top: 0;
+  color: #333;
+}
+
+.temp-icon, .rain-icon, .sun-icon {
+  font-size: 2rem;
+  margin: 10px 0;
+  animation: pulse 2s infinite;
+}
+
+.temp-value, .rain-value, .sun-value {
+  font-weight: bold;
+  font-size: 1.2rem;
+  margin: 5px 0 0;
+}
+
+.chart-container {
+  margin-bottom: 30px;
+  background: white;
+  padding: 15px;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.chart-container h4 {
+  margin-top: 0;
+  text-align: center;
+  color: #555;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.weather-charts {
+  animation: fadeIn 0.5s ease-in;
+}

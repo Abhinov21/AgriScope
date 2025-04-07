@@ -7,9 +7,9 @@ import axios from "axios";
 import FieldList from "../components/FieldList";
 import DateRangePicker from "../components/DateRangePicker";
 import NDVITimeSeriesChart from "../components/NDVITimeSeriesChart";
+import WeatherChart from "../components/WeatherChart";
 import "../styles/monitorField.css";
 import { useNavigate } from "react-router-dom";
-
 // Component to center map on coordinates
 const MapCentering = ({ coordinates }) => {
   const map = useMap();
@@ -53,6 +53,10 @@ const MonitorField = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
+  const [activeTab, setActiveTab] = useState("ndvi");
+
+  // Weather data state
+  const [weatherData, setWeatherData] = useState(null);
 
   // Get user email from Login.js data
   const getUserEmail = () => {
@@ -374,9 +378,35 @@ const MonitorField = () => {
     }
   };
 
-  // Fetch NDVI time series data (unchanged)
+  // Fetch weather data
+  const fetchWeatherData = async () => {
+    const geoCoords = selectedField?.geojson_data?.coordinates[0] || aoiCoordinates;
+    if (!geoCoords || !startDate || !endDate) {
+      showNotification("Please provide a field and date range to fetch weather data.", true);
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      
+      const response = await axios.post("http://localhost:5000/api/weather/data", {
+        coordinates: geoCoords,
+        start_date: startDate.toISOString().split("T")[0],
+        end_date: endDate.toISOString().split("T")[0],
+      });
+      
+      setWeatherData(response.data);
+      showNotification("Weather data retrieved successfully");
+    } catch (err) {
+      console.error("Error fetching weather data:", err);
+      showNotification(`Failed to fetch weather data: ${err.message || "Unknown error"}`, true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch NDVI time series data (modified to also fetch weather data)
   const fetchTimeSeries = async () => {
-    // Same code as before
     const geoCoords = selectedField?.geojson_data?.coordinates[0] || aoiCoordinates;
     if (!geoCoords || !startDate || !endDate) {
       showNotification("Please provide a field and date range to fetch time series.", true);
@@ -401,6 +431,10 @@ const MonitorField = () => {
       });
 
       setTimeSeriesData(response.data.time_series);
+      
+      // Also fetch weather data
+      await fetchWeatherData();
+      
       setShowPopup(true);
       showNotification("Time series data generated successfully");
     } catch (err) {
@@ -512,16 +546,45 @@ const MonitorField = () => {
         </div>
       </div>
       
-      {/* Popup for Time Series Chart */}
+      {/* Enhanced Popup for Time Series and Weather Data */}
       {showPopup && (
         <div className="popup-container">
           <div className="popup-content">
             <button className="popup-close" onClick={() => setShowPopup(false)}>Close</button>
-            <h3>NDVI Time Series</h3>
-            {timeSeriesData.length > 0 ? (
-              <NDVITimeSeriesChart data={timeSeriesData} />
+            
+            <div className="popup-tabs">
+              <button 
+                className={`popup-tab ${activeTab === 'ndvi' ? 'active' : ''}`}
+                onClick={() => setActiveTab('ndvi')}
+              >
+                NDVI Analysis
+              </button>
+              <button 
+                className={`popup-tab ${activeTab === 'weather' ? 'active' : ''}`}
+                onClick={() => setActiveTab('weather')}
+              >
+                Weather Data
+              </button>
+            </div>
+            
+            {activeTab === 'ndvi' ? (
+              <div className="ndvi-content">
+                <h3>NDVI Time Series</h3>
+                {timeSeriesData.length > 0 ? (
+                  <NDVITimeSeriesChart data={timeSeriesData} />
+                ) : (
+                  <p>No NDVI time series data available.</p>
+                )}
+              </div>
             ) : (
-              <p>No NDVI time series data available.</p>
+              <div className="weather-content">
+                <h3>Weather Analysis</h3>
+                {weatherData ? (
+                  <WeatherChart data={weatherData} />
+                ) : (
+                  <p>Loading weather data...</p>
+                )}
+              </div>
             )}
           </div>
         </div>
