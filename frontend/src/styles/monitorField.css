@@ -255,6 +255,30 @@ input[type="date"]:focus {
   transition: var(--transition);
 }
 
+/* Add this to your monitorField.css file */
+.success-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background-color: #68D391;
+  color: #276749;
+  padding: 12px 20px;
+  border-radius: 6px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  animation: fadeIn 0.3s, fadeOut 0.3s 2.7s;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-20px); }
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .content-wrapper {
@@ -272,3 +296,4 @@ input[type="date"]:focus {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
+

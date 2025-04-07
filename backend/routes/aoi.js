@@ -49,4 +49,82 @@ router.post("/", (req, res) => {
   });
 });
 
+// DELETE /api/fields/:id
+// Deletes a field by ID, after verifying the user has permission
+router.delete("/:id", (req, res) => {
+  const fieldId = req.params.id;
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ message: "Email is required for verification" });
+  }
+
+  // First verify the field belongs to the user with the provided email
+  const verifyQuery = `
+    SELECT a.id 
+    FROM aoi_plots a
+    JOIN users u ON a.user_id = u.id 
+    WHERE a.id = ? AND u.email = ?
+  `;
+  
+  db.query(verifyQuery, [fieldId, email], (err, results) => {
+    if (err) return res.status(500).json({ message: "Database error", error: err });
+    
+    if (results.length === 0) {
+      return res.status(403).json({ message: "Not authorized to delete this field or field not found" });
+    }
+    
+    // If verification passes, delete the field
+    const deleteQuery = "DELETE FROM aoi_plots WHERE id = ?";
+    db.query(deleteQuery, [fieldId], (err, results) => {
+      if (err) return res.status(500).json({ message: "Database error", error: err });
+      
+      if (results.affectedRows === 0) {
+        return res.status(404).json({ message: "Field not found" });
+      }
+      
+      res.status(200).json({ message: "Field deleted successfully" });
+    });
+  });
+});
+
+// PUT /api/fields/:id
+// Updates a field's name by ID, after verifying the user has permission
+router.put("/:id", (req, res) => {
+  const fieldId = req.params.id;
+  const { email, plot_name } = req.body;
+
+  if (!email || !plot_name) {
+    return res.status(400).json({ message: "Email and plot_name are required" });
+  }
+
+  // First verify the field belongs to the user with the provided email
+  const verifyQuery = `
+    SELECT a.id 
+    FROM aoi_plots a
+    JOIN users u ON a.user_id = u.id 
+    WHERE a.id = ? AND u.email = ?
+  `;
+  
+  db.query(verifyQuery, [fieldId, email], (err, results) => {
+    if (err) return res.status(500).json({ message: "Database error", error: err });
+    
+    if (results.length === 0) {
+      return res.status(403).json({ message: "Not authorized to update this field or field not found" });
+    }
+    
+    // If verification passes, update the field name
+    const updateQuery = "UPDATE aoi_plots SET plot_name = ? WHERE id = ?";
+    db.query(updateQuery, [plot_name, fieldId], (err, results) => {
+      if (err) return res.status(500).json({ message: "Database error", error: err });
+      
+      if (results.affectedRows === 0) {
+        return res.status(404).json({ message: "Field not found" });
+      }
+      
+      res.status(200).json({ message: "Field renamed successfully" });
+    });
+  });
+});
+
 module.exports = router;

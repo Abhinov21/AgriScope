@@ -1,0 +1,210 @@
+/* src/styles/FieldList.css */
+.field-list {
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+  
+  .field-list-title {
+    font-size: 1.2rem;
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #2c3e50;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .search-box {
+    margin-bottom: 12px;
+  }
+  
+  .search-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: all 0.2s;
+  }
+  
+  .search-input:focus {
+    outline: none;
+    border-color: #2dd4bf;
+    box-shadow: 0 0 0 2px rgba(45, 212, 191, 0.2);
+  }
+  
+  .fields-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 260px;
+    overflow-y: auto;
+  }
+  
+  .field-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    margin-bottom: 8px;
+    border-radius: 6px;
+    background-color: #f8f9fa;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .field-item:hover {
+    background-color: #f0f5ff;
+    transform: translateY(-2px);
+  }
+  
+  .field-item.selected {
+    background-color: #e6f7ff;
+    border-left: 3px solid #2dd4bf;
+  }
+
+  .field-item:hover .field-action-btn {
+    opacity: 0.8;
+  }
+  
+  .field-info {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .field-name {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 4px;
+  }
+  
+  .field-area, .field-date {
+    font-size: 12px;
+    color: #666;
+  }
+  
+  .field-arrow {
+    font-size: 18px;
+    color: #aaa;
+  }
+  
+  .no-fields-msg {
+    color: #666;
+    font-style: italic;
+    text-align: center;
+    padding: 20px 0;
+  }
+  
+  .field-count {
+    margin-top: 10px;
+    font-size: 12px;
+    color: #777;
+    text-align: right;
+  }
+  
+  /* Button Styles */
+  .generate-btn, .timeseries-btn {
+    width: 100%;
+    padding: 10px 16px;
+    margin-bottom: 12px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .generate-btn {
+    background-color: #2dd4bf;
+    color: white;
+  }
+  
+  .save-btn {
+    background-color: #4f46e5;
+  }
+  
+  .create-btn {
+    background-color: #10b981;
+  }
+  
+  .timeseries-btn {
+    background-color: white;
+    color: #4f46e5;
+    border: 1px solid #4f46e5;
+  }
+  
+  .generate-btn:hover, .timeseries-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .generate-btn:disabled, .timeseries-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  /* Field Actions */
+  .field-actions {
+    display: flex;
+    align-items: center;
+  }
+
+  .field-action-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px;
+    margin-left: 5px;
+    opacity: 0.6;
+    transition: all 0.2s;
+    border-radius: 4px;
+  }
+
+  .field-action-btn:hover {
+    opacity: 1;
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+
+  .rename-btn:hover {
+    color: #4f46e5;
+  }
+
+  .delete-btn:hover {
+    color: #e53e3e;
+  }
+
+  .field-rename-form {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .field-rename-input {
+    padding: 6px 8px;
+    border: 1px solid #4f46e5;
+    border-radius: 4px;
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+
+  .field-rename-input:focus {
+    outline: none;
+  }
+
+  .save-rename-btn {
+    background-color: #4f46e5;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+  }
+
+  .cancel-rename-btn {
+    background-color: #e2e8f0;
+    padding: 4px 8px;
+    border-radius: 4px;
+  }
