@@ -1,26 +1,170 @@
 // src/components/DateRangePicker.js
-import React from "react";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
+import React, { useState, useEffect } from "react";
+import "../styles/DateRangePicker.css";
 
 const DateRangePicker = ({ startDate, endDate, onStartChange, onEndChange }) => {
+  const [range, setRange] = useState("custom");
+  
+  // Format date to YYYY-MM-DD for input fields
+  const formatDateForInput = (date) => {
+    return date.toISOString().split("T")[0];
+  };
+  
+  // Calculate date difference in days
+  const calculateDateDifference = () => {
+    const diffTime = Math.abs(endDate - startDate);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+  
+  // Apply quick range presets - adjusted to exclude last 5 days
+  const applyQuickRange = (preset) => {
+    // Use today minus 5 days as the latest available data point
+    const today = new Date();
+    const latestReliableDate = new Date(today);
+    latestReliableDate.setDate(today.getDate() - 5);
+    
+    let newStartDate, newEndDate;
+    
+    switch(preset) {
+      case "7days":
+        newEndDate = new Date(latestReliableDate);
+        newStartDate = new Date(latestReliableDate);
+        newStartDate.setDate(newEndDate.getDate() - 7);
+        break;
+      case "30days":
+        newEndDate = new Date(latestReliableDate);
+        newStartDate = new Date(latestReliableDate);
+        newStartDate.setDate(newEndDate.getDate() - 30);
+        break;
+      case "90days":
+        newEndDate = new Date(latestReliableDate);
+        newStartDate = new Date(latestReliableDate);
+        newStartDate.setDate(newEndDate.getDate() - 90);
+        break;
+      case "thisMonth":
+        newEndDate = new Date(latestReliableDate);
+        newStartDate = new Date(today.getFullYear(), today.getMonth(), 1);
+        // If start of month is after our reliable date, use previous month
+        if (newStartDate > newEndDate) {
+          newStartDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+        }
+        break;
+      case "lastMonth":
+        newStartDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+        newEndDate = new Date(today.getFullYear(), today.getMonth(), 0);
+        // If end of last month is after our reliable date, adjust end date
+        if (newEndDate > latestReliableDate) {
+          newEndDate = new Date(latestReliableDate);
+        }
+        break;
+      case "thisYear":
+        newEndDate = new Date(latestReliableDate);
+        newStartDate = new Date(today.getFullYear(), 0, 1);
+        break;
+      default:
+        return;
+    }
+    
+    onStartChange(newStartDate);
+    onEndChange(newEndDate);
+    setRange(preset);
+  };
+  
+  // Update range state when dates change
+  useEffect(() => {
+    setRange("custom");
+  }, [startDate, endDate]);
+  
+  // Warn if selected end date is too recent
+  const isEndDateTooRecent = () => {
+    const today = new Date();
+    const fiveDaysAgo = new Date(today);
+    fiveDaysAgo.setDate(today.getDate() - 5);
+    return endDate > fiveDaysAgo;
+  };
+  
   return (
     <div className="date-range-picker">
-      <div>
-        <label>Start Date</label>
-        <DatePicker
-          selected={startDate}
-          onChange={(date) => onStartChange(date)}
-          dateFormat="yyyy-MM-dd"
-        />
+      <h3 className="date-range-title">Select Date Range</h3>
+      
+      <div className="date-inputs">
+        <div className="date-field">
+          <label className="date-label" htmlFor="start-date">Start Date:</label>
+          <input
+            id="start-date"
+            type="date"
+            className="date-input"
+            value={formatDateForInput(startDate)}
+            onChange={(e) => onStartChange(new Date(e.target.value))}
+            max={formatDateForInput(endDate)}
+          />
+        </div>
+        
+        <div className="date-field">
+          <label className="date-label" htmlFor="end-date">End Date:</label>
+          <input
+            id="end-date"
+            type="date"
+            className="date-input"
+            value={formatDateForInput(endDate)}
+            onChange={(e) => onEndChange(new Date(e.target.value))}
+            min={formatDateForInput(startDate)}
+          />
+        </div>
       </div>
-      <div>
-        <label>End Date</label>
-        <DatePicker
-          selected={endDate}
-          onChange={(date) => onEndChange(date)}
-          dateFormat="yyyy-MM-dd"
-        />
+      
+      <div className="quick-range-buttons">
+        <button 
+          className={`quick-range-btn ${range === "7days" ? "active" : ""}`}
+          onClick={() => applyQuickRange("7days")}
+        >
+          Last 7 days
+        </button>
+        <button 
+          className={`quick-range-btn ${range === "30days" ? "active" : ""}`}
+          onClick={() => applyQuickRange("30days")}
+        >
+          Last 30 days
+        </button>
+        <button 
+          className={`quick-range-btn ${range === "90days" ? "active" : ""}`}
+          onClick={() => applyQuickRange("90days")}
+        >
+          Last 90 days
+        </button>
+        <button 
+          className={`quick-range-btn ${range === "thisMonth" ? "active" : ""}`}
+          onClick={() => applyQuickRange("thisMonth")}
+        >
+          This Month
+        </button>
+        <button 
+          className={`quick-range-btn ${range === "lastMonth" ? "active" : ""}`}
+          onClick={() => applyQuickRange("lastMonth")}
+        >
+          Last Month
+        </button>
+        <button 
+          className={`quick-range-btn ${range === "thisYear" ? "active" : ""}`}
+          onClick={() => applyQuickRange("thisYear")}
+        >
+          This Year
+        </button>
+      </div>
+      
+      <div className="date-range-info">
+        Current selection: {calculateDateDifference()} days
+      </div>
+      
+      {isEndDateTooRecent() && (
+        <div className="date-range-warning">
+          <span className="warning-icon">⚠️</span> Weather data may be incomplete for the last 5 days. Consider selecting an earlier end date.
+        </div>
+      )}
+      
+      <div className="date-range-note">
+        Note: NASA POWER API weather data is typically delayed by 4-5 days.
       </div>
     </div>
   );

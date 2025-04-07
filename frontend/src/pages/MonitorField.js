@@ -489,7 +489,12 @@ const MonitorField = () => {
               disabled={loading || (!selectedField && !aoiCoordinates)} 
               className="generate-btn"
             >
-              {loading ? "Generating NDVI..." : "Generate NDVI Overlay"}
+              {loading ? (
+                <>
+                  <span className="loading"></span>
+                  Generating NDVI...
+                </>
+              ) : "Generate NDVI Overlay"}
             </button>
             
             <button 
@@ -497,7 +502,12 @@ const MonitorField = () => {
               disabled={loading || (!selectedField && !aoiCoordinates)} 
               className="timeseries-btn"
             >
-              {loading ? "Processing..." : "Show NDVI Time Series"}
+              {loading ? (
+                <>
+                  <span className="loading"></span>
+                  Processing...
+                </>
+              ) : "Show NDVI Time Series"}
             </button>
             
             {error && <p className="error-message">{error}</p>}

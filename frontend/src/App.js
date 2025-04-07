@@ -7,6 +7,7 @@ import Homepage from "./pages/Homepage";
 import MonitorField from "./pages/MonitorField";
 import RequirementsForm from "./pages/RequirementsForm";
 import DataAnalysis from "./pages/DataAnalysis";
+import "./styles/theme.css";
 
 const Layout = () => {
   const location = useLocation();
