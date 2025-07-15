@@ -1,0 +1,6 @@
+Flask
+gunicorn
+flask-cors
+numpy
+matplotlib
+# add all other libraries you're using

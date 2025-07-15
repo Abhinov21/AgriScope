@@ -1,5 +1,5 @@
-
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import '../styles/homepage.css';
 
 const Homepage = () => {
@@ -12,18 +12,11 @@ const Homepage = () => {
   }, []);
 
   return (
-    <div>
     <div className="homepage-container">
-     
-      
       <div className="sidebar">
         <ul>
-          <li>Field Data</li>
+          <li><Link to="/monitor-field" className="sidebar-link">Field Data</Link></li>
           <li>Weather</li>
-          <li>Crop Rotation</li>
-          <li>Fertilization</li>
-          <li>Spraying</li>
-          <li>Harvesting</li>
         </ul>
       </div>
       
@@ -54,7 +47,6 @@ const Homepage = () => {
           </div>
         </div>
       </div>
-    </div>
     </div>
   );
 };

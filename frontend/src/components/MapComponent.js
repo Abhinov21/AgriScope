@@ -85,10 +85,11 @@ const MapComponent = () => {
     <div className="map-component-container">
       {/* ✅ Map Container */}
       <MapContainer center={[20, 78]} zoom={5} className="map-container">
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution="&copy; OpenStreetMap contributors"
-        />
+      <TileLayer
+  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+  attribution='&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+/>
+
         <MapWithDraw setAoiCoordinates={setAoiCoordinates} />
         {ndviUrl && <NDVITileLayer ndviUrl={ndviUrl} />}
       </MapContainer>

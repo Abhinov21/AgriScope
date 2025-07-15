@@ -31,8 +31,7 @@ const Navbar = () => {
       <ul className="nav-links">
         <li><Link to="/homepage">Home</Link></li>
         <li><Link to="/features">Features</Link></li>
-        <li><Link to="/about">About</Link></li>
-        <li><Link to="/contact">Contact</Link></li>
+        <li><Link to="/AboutUs">About</Link></li>
         <React.Fragment>
           <li><Link to="/monitor-field">Monitor Field</Link></li>
           <li><Link to="/requirements">Crop Suggestions</Link></li>

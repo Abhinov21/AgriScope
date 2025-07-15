@@ -82,3 +82,21 @@ body {
   border-radius: 5px;
   margin-top: 10px;
 }
+/* Make the Link look like a sidebar <li> */
+.sidebar-link {
+  display: block;
+  padding: 15px;
+  color: white;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  transition: background 0.3s;
+}
+
+.sidebar-link:hover {
+  background: #34495e;
+}
+
+/* Optional: active link styling */
+.sidebar-link-active {
+  background: #1abc9c;
+}
