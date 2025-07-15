@@ -9,6 +9,8 @@ import RequirementsForm from "./pages/RequirementsForm";
 import DataAnalysis from "./pages/DataAnalysis";
 import "./styles/theme.css";
 import AboutUs from "./pages/AboutUs";
+import CropSuggestion from "./pages/CropSuggestion";
+
 
 const Layout = () => {
   const location = useLocation();
@@ -26,6 +28,7 @@ const Layout = () => {
         <Route path="/monitor-field" element={<MonitorField />} />
         <Route path="/requirements" element={<RequirementsForm />} />
         <Route path="/data-analysis" element={<DataAnalysis />} />
+        <Route path="/crop-suggestion" element={<CropSuggestion />}/>
       </Routes>
     </>
   );

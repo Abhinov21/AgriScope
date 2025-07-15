@@ -60,6 +60,14 @@
     border-radius: 5px;
     transition: background-color 0.3s ease;
   }
+
+  .auth-links ul li:first-child {
+  color: #f8c291;
+  font-weight: bold;
+  font-size: 16px;
+  padding-right: 10px;
+}
+
   
   .navbar .nav-link:hover {
     background-color: #38ada9; /* Bright green on hover */
@@ -86,4 +94,5 @@
       text-align: center;
     }
   }
+
   
