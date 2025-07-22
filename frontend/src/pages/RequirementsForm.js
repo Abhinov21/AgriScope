@@ -23,10 +23,11 @@ const RequirementsForm = () => {
   };
 
   const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log("Form Submitted:", formData);
-    alert("Form submitted successfully!");
-  };
+  e.preventDefault();
+  console.log("Form Submitted:", formData);
+  navigate("/crop-suggestion", { state: formData });
+};
+
 
   return (
     <div>

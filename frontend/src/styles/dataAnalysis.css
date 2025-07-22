@@ -1,58 +1,100 @@
 .analysis-container {
-    max-width: 600px;
-    margin: 20px auto;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    background: white;
-  }
+  max-width: 700px;
+  margin: 40px auto;
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  background: #ffffff;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  cursor: pointer;
   
-  .analysis-container h2 {
-    text-align: center;
-    color: #333;
-  }
-  
-  label {
-    font-size: 18px;
-    margin-bottom: 8px;
-    display: block;
-  }
-  
-  select {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 20px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-  }
-  
-  .crop-info {
-    background: #f9f9f9;
-    padding: 15px;
-    border-radius: 8px;
-    margin-top: 15px;
-  }
-  
-  .pros-cons {
-    display: flex;
-    justify-content: space-between;
-  }
-  
-  .pros, .cons {
-    width: 45%;
-  }
-  
-  h4 {
-    color: #333;
-  }
-  
-  ul {
-    list-style: none;
-    padding: 0;
-  }
-  
-  li {
-    margin: 5px 0;
-    font-size: 16px;
-  }
-  
+}
+
+.analysis-container h2 {
+  text-align: center;
+  color: #2c3e50;
+  margin-bottom: 30px;
+  font-size: 26px;
+  cursor: pointer;
+}
+
+label {
+  font-size: 17px;
+  margin: 12px 0 6px;
+  display: block;
+  font-weight: 500;
+  color: #34495e;
+  cursor: pointer;
+}
+
+select {
+  width: 100%;
+  padding: 10px 14px;
+  margin-bottom: 20px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 16px;
+  background-color: #fdfdfd;
+  transition: border-color 0.3s ease;
+  cursor: pointer;
+}
+
+select:focus {
+  border-color: #5dade2;
+  outline: none;
+  cursor: pointer;
+}
+
+.crop-info {
+  background: #f4f9fd;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid #d6eaf8;
+  margin-top: 20px;
+  cursor: pointer;
+}
+
+.crop-info h3 {
+  color: #2e86c1;
+  font-size: 20px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.pros-cons {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.pros, .cons {
+  flex: 1;
+  min-width: 45%;
+  background-color: #ffffff;
+  border-radius: 8px;
+  padding: 15px;
+  border: 1px solid #ebf5fb;
+}
+
+.pros h4, .cons h4 {
+  margin-bottom: 10px;
+  color: #1f618d;
+}
+
+ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+li {
+  margin: 8px 0;
+  font-size: 15.5px;
+  line-height: 1.5;
+  color: #2c3e50;
+}
+
+li::before {
+  margin-right: 8px;
+  font-size: 14px;
+}

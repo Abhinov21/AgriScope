@@ -1,0 +1,45 @@
+/* src/components/AboutUs.css */
+
+.about-section {
+    max-width: 900px;
+    margin: 50px auto;
+    padding: 40px;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #333;
+  }
+  
+  .about-section h1 {
+    color: #2c3e50;
+    margin-bottom: 20px;
+    font-size: 2rem;
+  }
+  
+  .about-section p {
+    line-height: 1.8;
+    font-size: 1.1rem;
+    margin-bottom: 20px;
+  }
+  
+  .highlight {
+    color: #27ae60;
+    font-weight: 600;
+  }
+  
+  @media (max-width: 768px) {
+    .about-section {
+      padding: 20px;
+      margin: 20px;
+    }
+  
+    .about-section h1 {
+      font-size: 1.5rem;
+    }
+  
+    .about-section p {
+      font-size: 1rem;
+    }
+  }
+  
