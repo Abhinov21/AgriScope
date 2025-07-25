@@ -373,3 +373,101 @@ input[type="date"]:focus {
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* Field Information Overlay Styles */
+.field-info-overlay {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  pointer-events: none; /* Allow map interaction underneath */
+}
+
+.field-info-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: var(--border-radius);
+  padding: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  min-width: 220px;
+  pointer-events: auto; /* Re-enable for the card itself */
+  animation: slideInFromRight 0.3s ease-out;
+}
+
+.field-info-card h4 {
+  margin: 0 0 8px 0;
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.field-info-card p {
+  margin: 4px 0;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.field-info-card strong {
+  color: var(--primary-dark);
+  font-weight: 600;
+}
+
+.field-status {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background-color: var(--success);
+  color: white;
+}
+
+.field-status.drawn {
+  background-color: #f59e0b;
+  color: white;
+}
+
+/* Animation for field info card */
+@keyframes slideInFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Enhanced map container with better positioning */
+.map-section {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Responsive adjustments for field info overlay */
+@media (max-width: 768px) {
+  .field-info-overlay {
+    top: 10px;
+    right: 10px;
+  }
+  
+  .field-info-card {
+    min-width: 180px;
+    padding: 12px;
+  }
+  
+  .field-info-card h4 {
+    font-size: 0.9rem;
+  }
+  
+  .field-info-card p {
+    font-size: 0.8rem;
+  }
+}
+

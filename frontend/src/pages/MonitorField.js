@@ -1,6 +1,7 @@
 // src/pages/MonitorField.js
 import React, { useState, useEffect, useRef } from "react";
 import { MapContainer, TileLayer, Polygon, useMap } from "react-leaflet";
+import L from "leaflet"; // Import Leaflet for bounds calculation
 import MapWithDraw from "../components/MapWithDraw";
 import NDVITileLayer from "../components/NDVITileLayer";
 import axios from "axios";
@@ -10,23 +11,97 @@ import NDVITimeSeriesChart from "../components/NDVITimeSeriesChart";
 import WeatherChart from "../components/WeatherChart";
 import "../styles/monitorField.css";
 import { useNavigate } from "react-router-dom";
-// Component to center map on coordinates
+
+// Utility function to calculate polygon area using Shoelace formula
+const calculatePolygonArea = (coordinates) => {
+  if (!coordinates || coordinates.length < 3) return 0;
+  
+  let area = 0;
+  const n = coordinates.length;
+  
+  for (let i = 0; i < n; i++) {
+    const j = (i + 1) % n;
+    area += coordinates[i][0] * coordinates[j][1];
+    area -= coordinates[j][0] * coordinates[i][1];
+  }
+  
+  area = Math.abs(area) / 2;
+  
+  // Convert from decimal degrees to hectares (more accurate conversion)
+  // Using Haversine-based approximation: 1 degree ≈ 111 km at equator
+  // 1 square degree ≈ 12,321 km² ≈ 1,232,100 hectares
+  const areaHectares = area * 1232100;
+  
+  return areaHectares;
+};
+
+// Enhanced component to center and zoom map on field coordinates
 const MapCentering = ({ coordinates }) => {
   const map = useMap();
 
   useEffect(() => {
     if (coordinates && coordinates.length > 0) {
-      // Calculate center of polygon
-      const latLngs = coordinates.map(coord => [coord[1], coord[0]]);
-
-      // Calculate bounds to handle fields of any size
-      const bounds = latLngs.reduce(
-        (bounds, point) => bounds.extend(point),
-        map.getBounds()
-      );
-
-      // Center and zoom the map to fit the field
-      map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
+      try {
+        // Convert coordinates to Leaflet LatLng format [lat, lng]
+        const latLngs = coordinates.map(coord => [coord[1], coord[0]]);
+        
+        // Create bounds object from the field coordinates
+        const bounds = L.latLngBounds(latLngs);
+        
+        // Calculate field dimensions for dynamic padding
+        const fieldAreaHectares = calculatePolygonArea(coordinates);
+        
+        // Dynamic padding based on field size for optimal 1:2 ratio viewing
+        // Adjusted thresholds for real agricultural field sizes
+        let paddingFactor;
+        if (fieldAreaHectares < 1) { // Very small field (< 1 hectare - gardens, small plots)
+          paddingFactor = 0.8; // 80% padding for context
+        } else if (fieldAreaHectares < 10) { // Small field (1-10 hectares - small farms)
+          paddingFactor = 0.7; // 70% padding 
+        } else if (fieldAreaHectares < 50) { // Medium field (10-50 hectares - typical farms)
+          paddingFactor = 0.6; // 60% padding for 1:2.5 ratio
+        } else if (fieldAreaHectares < 100) { // Large field (50-100 hectares)
+          paddingFactor = 0.5; // 50% padding for 1:2 ratio (your preferred ratio)
+        } else if (fieldAreaHectares < 500) { // Very large field (100-500 hectares)
+          paddingFactor = 0.4; // 40% padding for 1:1.7 ratio
+        } else { // Massive agricultural field (500+ hectares)
+          paddingFactor = 0.3; // 30% padding for 1:1.4 ratio
+        }
+        
+        // Calculate dynamic padding based on map container size
+        const mapContainer = map.getContainer();
+        const containerWidth = mapContainer.clientWidth;
+        const containerHeight = mapContainer.clientHeight;
+        
+        const paddingX = Math.floor(containerWidth * paddingFactor / 2);
+        const paddingY = Math.floor(containerHeight * paddingFactor / 2);
+        
+        // Fit bounds with animation and dynamic padding
+        map.fitBounds(bounds, {
+          padding: [paddingY, paddingX], // [top/bottom, left/right]
+          maxZoom: 18, // Prevent over-zooming for very small fields
+          animate: true, // Smooth animation
+          duration: 1.2 // Animation duration in seconds
+        });
+        
+        console.log(`📍 Map centered on field:`, {
+          area: `${fieldAreaHectares.toFixed(2)} hectares`,
+          padding: `${paddingFactor * 100}%`,
+          bounds: bounds.toBBoxString()
+        });
+        
+      } catch (error) {
+        console.error('Error centering map on field:', error);
+        
+        // Fallback: Simple center calculation if bounds fail
+        const centerLat = coordinates.reduce((sum, coord) => sum + coord[1], 0) / coordinates.length;
+        const centerLng = coordinates.reduce((sum, coord) => sum + coord[0], 0) / coordinates.length;
+        
+        map.setView([centerLat, centerLng], 12, {
+          animate: true,
+          duration: 1.2
+        });
+      }
     }
   }, [coordinates, map]);
 
@@ -190,12 +265,34 @@ const MonitorField = () => {
     }
   };
 
-  // Select field callback
+  // Select field callback with enhanced feedback
   const handleFieldSelect = (field) => {
     setSelectedField(field);
     // Clear any drawn AOI when a saved field is selected
     setAoiCoordinates(null);
     setDrawingMode(false);
+    
+    // Clear any existing NDVI data when switching fields
+    setNdviUrl("");
+    setTimeSeriesData([]);
+    setWeatherData(null);
+    
+    // Calculate and display field information
+    if (field.geojson_data?.coordinates?.[0]) {
+      const areaHectares = calculatePolygonArea(field.geojson_data.coordinates[0]);
+      
+      showNotification(
+        `📍 Selected "${field.plot_name}" - Area: ${areaHectares.toFixed(2)} hectares. Map centering...`
+      );
+      
+      console.log(`Selected field details:`, {
+        name: field.plot_name,
+        area: `${areaHectares.toFixed(2)} hectares`,
+        coordinates: field.geojson_data.coordinates[0].length + ' points'
+      });
+    } else {
+      showNotification(`📍 Selected "${field.plot_name}"`);
+    }
   };
 
   // Delete field callback
@@ -450,6 +547,19 @@ const MonitorField = () => {
     ? (selectedField?.geojson_data?.coordinates[0] || aoiCoordinates).map(coord => [coord[1], coord[0]])
     : [];
 
+  // Calculate current field area for display
+  const getCurrentFieldArea = () => {
+    if (selectedField?.geojson_data?.coordinates?.[0]) {
+      const areaHectares = calculatePolygonArea(selectedField.geojson_data.coordinates[0]);
+      return areaHectares.toFixed(2);
+    }
+    if (aoiCoordinates) {
+      const areaHectares = calculatePolygonArea(aoiCoordinates);
+      return areaHectares.toFixed(2);
+    }
+    return null;
+  };
+
   return (
     <div className="monitor-field-page">
       <h2 className="page-title">Monitor Your Field</h2>
@@ -516,6 +626,22 @@ const MonitorField = () => {
         
         {/* Map Section */}
         <div className="map-section">
+          {/* Field Information Overlay */}
+          {(selectedField || aoiCoordinates) && (
+            <div className="field-info-overlay">
+              <div className="field-info-card">
+                <h4>📍 {selectedField ? selectedField.plot_name : "New Field"}</h4>
+                <p>Area: <strong>{getCurrentFieldArea()} hectares</strong></p>
+                {selectedField && (
+                  <p>Status: <span className="field-status">Selected</span></p>
+                )}
+                {!selectedField && aoiCoordinates && (
+                  <p>Status: <span className="field-status drawn">Drawn - Ready to Save</span></p>
+                )}
+              </div>
+            </div>
+          )}
+          
           <MapContainer 
             center={[20.5937, 78.9629]} 
             zoom={5} 
@@ -535,14 +661,15 @@ const MonitorField = () => {
               setDrawingMode={setDrawingMode}
             />
             
-            {/* Show polygon for selected field or drawn AOI */}
+            {/* Enhanced polygon display for selected field or drawn AOI */}
             {(selectedField?.geojson_data || aoiCoordinates) && (
               <Polygon 
                 positions={polygonPositions} 
                 pathOptions={{ 
-                  color: selectedField ? "blue" : "red",
-                  weight: 3,
-                  fillOpacity: 0.2
+                  color: selectedField ? "#2563eb" : "#dc2626", // Blue for selected, red for drawn
+                  weight: selectedField ? 3 : 2,
+                  fillOpacity: selectedField ? 0.15 : 0.1,
+                  dashArray: selectedField ? null : "5, 10" // Dashed line for drawn fields
                 }} 
               />
             )}
