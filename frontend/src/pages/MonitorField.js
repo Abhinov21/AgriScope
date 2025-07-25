@@ -562,11 +562,20 @@ const MonitorField = () => {
 
   return (
     <div className="monitor-field-page">
-      <h2 className="page-title">Monitor Your Field</h2>
-      <div className="content-wrapper">
+      {/* Page Header */}
+      <div className="monitor-header">
+        <h1 className="page-title">Monitor Your Fields</h1>
+        <p className="page-subtitle">
+          Track field health, analyze NDVI data, and monitor weather patterns for data-driven farming decisions
+        </p>
+      </div>
+
+      {/* Main Content Grid */}
+      <div className="monitor-content">
         {/* Sidebar */}
-        <div className="side-panel">
-          <div className="panel-content">
+        <div className="monitor-sidebar">
+          <div className="sidebar-section">
+            <h3>📍 Field Management</h3>
             <FieldList 
               fields={fields} 
               selectedField={selectedField}
@@ -575,73 +584,95 @@ const MonitorField = () => {
               onFieldRename={handleFieldRename}
             />
             
-            {/* Conditional button rendering based on state */}
+            {/* Field Action Button */}
             {aoiCoordinates && !selectedField ? (
-              <button onClick={saveField} disabled={loading} className="generate-btn save-btn">
-                {loading ? "Saving..." : "Save Field"}
+              <button onClick={saveField} disabled={loading} className="action-btn save-btn">
+                {loading ? (
+                  <>
+                    <span className="loading-spinner"></span>
+                    Saving...
+                  </>
+                ) : "💾 Save Field"}
               </button>
             ) : (
-              <button onClick={enableDrawMode} disabled={loading || drawingMode} className="generate-btn create-btn">
-                {drawingMode ? "Drawing Mode Active" : "Plot New AOI"}
+              <button onClick={enableDrawMode} disabled={loading || drawingMode} className="action-btn create-btn">
+                {drawingMode ? "✏️ Drawing Active" : "🗺️ Draw New Field"}
               </button>
             )}
-            
+          </div>
+
+          <div className="sidebar-section">
+            <h3>📅 Analysis Period</h3>
             <DateRangePicker
               startDate={startDate}
               endDate={endDate}
               onStartChange={setStartDate}
               onEndChange={setEndDate}
             />
-            
-            {/* Only enable NDVI buttons if there's a field selected or drawn */}
+          </div>
+
+          <div className="sidebar-section">
+            <h3>🛰️ Satellite Analysis</h3>
             <button 
               onClick={handleSubmitNDVI} 
               disabled={loading || (!selectedField && !aoiCoordinates)} 
-              className="generate-btn"
+              className="analysis-btn ndvi-btn"
             >
               {loading ? (
                 <>
-                  <span className="loading"></span>
-                  Generating NDVI...
+                  <span className="loading-spinner"></span>
+                  Generating...
                 </>
-              ) : "Generate NDVI Overlay"}
+              ) : "📊 Generate NDVI Overlay"}
             </button>
             
             <button 
               onClick={fetchTimeSeries} 
               disabled={loading || (!selectedField && !aoiCoordinates)} 
-              className="timeseries-btn"
+              className="analysis-btn timeseries-btn"
             >
               {loading ? (
                 <>
-                  <span className="loading"></span>
+                  <span className="loading-spinner"></span>
                   Processing...
                 </>
-              ) : "Show NDVI Time Series"}
+              ) : "📈 Show Time Series"}
             </button>
-            
-            {error && <p className="error-message">{error}</p>}
           </div>
-        </div>
-        
-        {/* Map Section */}
-        <div className="map-section">
-          {/* Field Information Overlay */}
+
+          {/* Field Information */}
           {(selectedField || aoiCoordinates) && (
-            <div className="field-info-overlay">
+            <div className="sidebar-section">
+              <h3>ℹ️ Field Details</h3>
               <div className="field-info-card">
-                <h4>📍 {selectedField ? selectedField.plot_name : "New Field"}</h4>
-                <p>Area: <strong>{getCurrentFieldArea()} hectares</strong></p>
-                {selectedField && (
-                  <p>Status: <span className="field-status">Selected</span></p>
-                )}
-                {!selectedField && aoiCoordinates && (
-                  <p>Status: <span className="field-status drawn">Drawn - Ready to Save</span></p>
-                )}
+                <div className="field-name">
+                  📍 {selectedField ? selectedField.plot_name : "New Field"}
+                </div>
+                <div className="field-area">
+                  Area: <strong>{getCurrentFieldArea()} hectares</strong>
+                </div>
+                <div className="field-status-container">
+                  Status: 
+                  {selectedField && (
+                    <span className="field-status selected">Selected</span>
+                  )}
+                  {!selectedField && aoiCoordinates && (
+                    <span className="field-status drawn">Drawn - Ready to Save</span>
+                  )}
+                </div>
               </div>
             </div>
           )}
-          
+
+          {error && (
+            <div className="sidebar-section">
+              <div className="error-message">{error}</div>
+            </div>
+          )}
+        </div>
+        
+        {/* Map Section */}
+        <div className="monitor-main">
           <MapContainer 
             center={[20.5937, 78.9629]} 
             zoom={5} 
@@ -689,42 +720,46 @@ const MonitorField = () => {
       {showPopup && (
         <div className="popup-container">
           <div className="popup-content">
-            <button className="popup-close" onClick={() => setShowPopup(false)}>Close</button>
+            <button className="popup-close" onClick={() => setShowPopup(false)}>
+              ✕ Close
+            </button>
             
             <div className="popup-tabs">
               <button 
                 className={`popup-tab ${activeTab === 'ndvi' ? 'active' : ''}`}
                 onClick={() => setActiveTab('ndvi')}
               >
-                NDVI Analysis
+                📊 NDVI Analysis
               </button>
               <button 
                 className={`popup-tab ${activeTab === 'weather' ? 'active' : ''}`}
                 onClick={() => setActiveTab('weather')}
               >
-                Weather Data
+                🌤️ Weather Data
               </button>
             </div>
             
-            {activeTab === 'ndvi' ? (
-              <div className="ndvi-content">
-                <h3>NDVI Time Series</h3>
-                {timeSeriesData.length > 0 ? (
-                  <NDVITimeSeriesChart data={timeSeriesData} />
-                ) : (
-                  <p>No NDVI time series data available.</p>
-                )}
-              </div>
-            ) : (
-              <div className="weather-content">
-                <h3>Weather Analysis</h3>
-                {weatherData ? (
-                  <WeatherChart data={weatherData} />
-                ) : (
-                  <p>Loading weather data...</p>
-                )}
-              </div>
-            )}
+            <div className="popup-content-body">
+              {activeTab === 'ndvi' ? (
+                <div className="ndvi-content">
+                  <h3>NDVI Time Series Analysis</h3>
+                  {timeSeriesData.length > 0 ? (
+                    <NDVITimeSeriesChart data={timeSeriesData} />
+                  ) : (
+                    <p className="no-data">No NDVI time series data available for the selected period.</p>
+                  )}
+                </div>
+              ) : (
+                <div className="weather-content">
+                  <h3>Weather Analysis</h3>
+                  {weatherData ? (
+                    <WeatherChart data={weatherData} />
+                  ) : (
+                    <p className="loading-data">Loading weather data...</p>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
