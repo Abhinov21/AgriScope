@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import "../styles/FieldList.css";
 
-const FieldList = ({ fields, selectedField, onFieldSelect, onFieldDelete, onFieldRename }) => {
+const FieldList = ({ fields, selectedField, onFieldSelect, onFieldDelete, onFieldRename, compact = false }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [editingField, setEditingField] = useState(null);
   const [newFieldName, setNewFieldName] = useState("");
@@ -45,8 +45,8 @@ const FieldList = ({ fields, selectedField, onFieldSelect, onFieldDelete, onFiel
   };
   
   return (
-    <div className="field-list">
-      <h3 className="field-list-title">Your Fields</h3>
+    <div className={`field-list ${compact ? 'compact' : ''}`}>
+      <h3 className="field-list-title">{compact ? "Select Field" : "Your Fields"}</h3>
       
       <div className="search-box">
         <input
@@ -112,20 +112,24 @@ const FieldList = ({ fields, selectedField, onFieldSelect, onFieldDelete, onFiel
                     )}
                   </div>
                   <div className="field-actions">
-                    <button 
-                      className="field-action-btn rename-btn" 
-                      onClick={(e) => handleRenameClick(field, e)}
-                      title="Rename field"
-                    >
-                      ✏️
-                    </button>
-                    <button 
-                      className="field-action-btn delete-btn" 
-                      onClick={(e) => handleDeleteClick(field, e)}
-                      title="Delete field"
-                    >
-                      🗑️
-                    </button>
+                    {!compact && (
+                      <>
+                        <button 
+                          className="field-action-btn rename-btn" 
+                          onClick={(e) => handleRenameClick(field, e)}
+                          title="Rename field"
+                        >
+                          ✏️
+                        </button>
+                        <button 
+                          className="field-action-btn delete-btn" 
+                          onClick={(e) => handleDeleteClick(field, e)}
+                          title="Delete field"
+                        >
+                          🗑️
+                        </button>
+                      </>
+                    )}
                     <div className="field-arrow">›</div>
                   </div>
                 </>

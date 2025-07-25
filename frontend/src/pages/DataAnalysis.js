@@ -1,4 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import NDVITimeSeriesChart from "../components/NDVITimeSeriesChart";
+import WeatherChart from "../components/WeatherChart";
 import "../styles/dataAnalysis.css";
 
 const cropData = {
@@ -173,9 +176,160 @@ const cropData = {
 };
 
 const DataAnalysis = () => {
+  const navigate = useNavigate();
+  
+  // Existing crop analysis state
   const [selectedSeason, setSelectedSeason] = useState("");
   const [selectedCrop, setSelectedCrop] = useState("");
   const [cropInfo, setCropInfo] = useState(null);
+  
+  // Field analysis state
+  const [fieldAnalysisData, setFieldAnalysisData] = useState(null);
+  const [showFieldAnalysis, setShowFieldAnalysis] = useState(false);
+  const [analysisLoading, setAnalysisLoading] = useState(false);
+
+  // Check for field data from FieldReports
+  useEffect(() => {
+    const analysisData = localStorage.getItem("analysisField");
+    if (analysisData) {
+      try {
+        const parsedData = JSON.parse(analysisData);
+        setFieldAnalysisData(parsedData);
+        setShowFieldAnalysis(true);
+        // Clear the stored data after loading
+        localStorage.removeItem("analysisField");
+      } catch (error) {
+        console.error("Error parsing analysis data:", error);
+      }
+    }
+  }, []);
+
+  // Toggle between field analysis and crop analysis
+  const toggleAnalysisMode = () => {
+    setShowFieldAnalysis(!showFieldAnalysis);
+  };
+
+  // Navigate back to field reports
+  const backToReports = () => {
+    navigate("/field-reports");
+  };
+
+  // Analyze NDVI trends and provide insights
+  const analyzeNDVITrends = (ndviData) => {
+    if (!ndviData || ndviData.length === 0) return null;
+
+    const values = ndviData.map(item => item.ndvi);
+    const average = values.reduce((sum, val) => sum + val, 0) / values.length;
+    const maximum = Math.max(...values);
+    const minimum = Math.min(...values);
+
+    // Calculate trend (simple linear regression slope)
+    const n = values.length;
+    const sumX = values.reduce((sum, _, index) => sum + index, 0);
+    const sumY = values.reduce((sum, val) => sum + val, 0);
+    const sumXY = values.reduce((sum, val, index) => sum + (index * val), 0);
+    const sumXX = values.reduce((sum, _, index) => sum + (index * index), 0);
+    
+    const trend = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+
+    // Determine health status based on average NDVI
+    const healthStatus = getHealthStatus(average);
+
+    // Generate recommendations based on analysis
+    const recommendations = generateRecommendations(average, trend, minimum, maximum);
+
+    return {
+      average,
+      maximum,
+      minimum,
+      trend,
+      healthStatus,
+      recommendations
+    };
+  };
+
+  // Get health status based on NDVI value
+  const getHealthStatus = (avgNdvi) => {
+    if (avgNdvi >= 0.7) {
+      return {
+        status: "Excellent",
+        color: "#28a745",
+        emoji: "🌟"
+      };
+    } else if (avgNdvi >= 0.5) {
+      return {
+        status: "Good",
+        color: "#20c997",
+        emoji: "✅"
+      };
+    } else if (avgNdvi >= 0.3) {
+      return {
+        status: "Fair",
+        color: "#ffc107",
+        emoji: "⚠️"
+      };
+    } else if (avgNdvi >= 0.2) {
+      return {
+        status: "Poor",
+        color: "#fd7e14",
+        emoji: "⚡"
+      };
+    } else {
+      return {
+        status: "Critical",
+        color: "#dc3545",
+        emoji: "🚨"
+      };
+    }
+  };
+
+  // Generate smart recommendations based on NDVI analysis
+  const generateRecommendations = (average, trend, minimum, maximum) => {
+    const recommendations = [];
+
+    // Health-based recommendations
+    if (average < 0.3) {
+      recommendations.push("🌱 Consider soil testing to identify nutrient deficiencies");
+      recommendations.push("💧 Evaluate irrigation system effectiveness");
+      recommendations.push("🔍 Inspect for pest or disease issues");
+    } else if (average < 0.5) {
+      recommendations.push("🌿 Monitor vegetation closely for stress indicators");
+      recommendations.push("💊 Consider targeted fertilizer application");
+    } else if (average >= 0.7) {
+      recommendations.push("🌟 Excellent vegetation health - maintain current practices");
+      recommendations.push("📅 Continue regular monitoring schedule");
+    }
+
+    // Trend-based recommendations
+    if (trend < -0.01) {
+      recommendations.push("📉 Declining trend detected - investigate potential causes");
+      recommendations.push("🔧 Consider adjusting management practices");
+    } else if (trend > 0.01) {
+      recommendations.push("📈 Positive growth trend - current management is effective");
+    } else {
+      recommendations.push("➡️ Stable vegetation - maintain consistent care");
+    }
+
+    // Variability-based recommendations
+    if ((maximum - minimum) > 0.4) {
+      recommendations.push("📊 High NDVI variability suggests uneven field conditions");
+      recommendations.push("🎯 Consider zone-specific management strategies");
+    }
+
+    // Seasonal recommendations
+    const currentMonth = new Date().getMonth();
+    if (currentMonth >= 2 && currentMonth <= 4) { // Spring
+      recommendations.push("🌸 Spring season: Monitor for new growth and pest emergence");
+    } else if (currentMonth >= 5 && currentMonth <= 7) { // Summer
+      recommendations.push("☀️ Summer season: Ensure adequate water supply during peak growth");
+    } else if (currentMonth >= 8 && currentMonth <= 10) { // Fall
+      recommendations.push("🍂 Fall season: Prepare for harvest and post-harvest management");
+    } else { // Winter
+      recommendations.push("❄️ Winter season: Plan for next growing season");
+    }
+
+    return recommendations.slice(0, 6); // Limit to 6 recommendations
+  };
 
   const handleSeasonChange = (e) => {
     const season = e.target.value;
@@ -192,52 +346,204 @@ const DataAnalysis = () => {
 
   return (
     <div className="analysis-container">
-      <h2>Crop Pros & Cons by Season</h2>
+      {/* Navigation Header */}
+      <div className="analysis-header">
+        <h2>🔬 Agricultural Data Analysis</h2>
+        <div className="analysis-nav">
+          {fieldAnalysisData && (
+            <button 
+              onClick={toggleAnalysisMode}
+              className={`toggle-btn ${showFieldAnalysis ? 'active' : ''}`}
+            >
+              {showFieldAnalysis ? '📊 Crop Analysis' : '🌾 Field Analysis'}
+            </button>
+          )}
+          {fieldAnalysisData && (
+            <button onClick={backToReports} className="back-btn">
+              ← Back to Reports
+            </button>
+          )}
+        </div>
+      </div>
 
-      <label>Select a Season:</label>
-      <select value={selectedSeason} onChange={handleSeasonChange}>
-        <option value="">--Select Season--</option>
-        <option value="monsoon">Monsoon</option>
-        <option value="summer">Summer</option>
-        <option value="winter">Winter</option>
-        <option value="spring">Spring</option>
-      </select>
+      {/* Field Analysis Section */}
+      {showFieldAnalysis && fieldAnalysisData ? (
+        <div className="field-analysis-section">
+          <div className="analysis-header-info">
+            <h3>📈 Advanced Field Analysis: {fieldAnalysisData.field.plot_name}</h3>
+            <p className="analysis-period">
+              Analysis Period: {new Date(fieldAnalysisData.dateRange.start).toLocaleDateString()} - {new Date(fieldAnalysisData.dateRange.end).toLocaleDateString()}
+            </p>
+          </div>
 
-      {selectedSeason && (
-        <>
-          <label>Select a Crop:</label>
-          <select value={selectedCrop} onChange={handleCropChange}>
-            <option value="">--Select Crop--</option>
-            {Object.keys(cropData[selectedSeason]).map((crop) => (
-              <option key={crop} value={crop}>
-                {crop.charAt(0).toUpperCase() + crop.slice(1)}
-              </option>
-            ))}
-          </select>
-        </>
-      )}
-
-      {cropInfo && (
-        <div className="crop-info">
-          <h3>Pros & Cons of {selectedCrop.charAt(0).toUpperCase() + selectedCrop.slice(1)}</h3>
-          <div className="pros-cons">
-            <div className="pros">
-              <h4>Pros:</h4>
-              <ul>
-                {cropInfo.pros.map((pro, index) => (
-                  <li key={index}>✅ {pro}</li>
-                ))}
-              </ul>
+          {/* NDVI Analysis */}
+          {fieldAnalysisData.ndviData && fieldAnalysisData.ndviData.length > 0 && (
+            <div className="analysis-section">
+              <h4>🌱 NDVI Trend Analysis</h4>
+              
+              <div className="charts-grid">
+                <div className="chart-container">
+                  <NDVITimeSeriesChart data={fieldAnalysisData.ndviData} />
+                </div>
+                
+                <div className="analysis-insights">
+                  {(() => {
+                    const analysis = analyzeNDVITrends(fieldAnalysisData.ndviData);
+                    if (!analysis) return <p>No analysis available</p>;
+                    
+                    return (
+                      <>
+                        <div className="health-status">
+                          <h5>Field Health Status</h5>
+                          <div 
+                            className="status-badge"
+                            style={{ backgroundColor: analysis.healthStatus.color }}
+                          >
+                            {analysis.healthStatus.emoji} {analysis.healthStatus.status}
+                          </div>
+                        </div>
+                        
+                        <div className="metrics-grid">
+                          <div className="metric">
+                            <span className="metric-label">Average NDVI</span>
+                            <span className="metric-value">{analysis.average.toFixed(3)}</span>
+                          </div>
+                          <div className="metric">
+                            <span className="metric-label">Maximum</span>
+                            <span className="metric-value">{analysis.maximum.toFixed(3)}</span>
+                          </div>
+                          <div className="metric">
+                            <span className="metric-label">Minimum</span>
+                            <span className="metric-value">{analysis.minimum.toFixed(3)}</span>
+                          </div>
+                          <div className="metric">
+                            <span className="metric-label">Trend</span>
+                            <span className={`metric-value ${analysis.trend > 0 ? 'positive' : analysis.trend < 0 ? 'negative' : 'neutral'}`}>
+                              {analysis.trend > 0.001 ? '📈 Improving' : analysis.trend < -0.001 ? '📉 Declining' : '➡️ Stable'}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        <div className="recommendations">
+                          <h5>🎯 Smart Recommendations</h5>
+                          <ul>
+                            {analysis.recommendations.map((rec, index) => (
+                              <li key={index}>{rec}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+              </div>
             </div>
-            <div className="cons">
-              <h4>Cons:</h4>
-              <ul>
-                {cropInfo.cons.map((con, index) => (
-                  <li key={index}>❌ {con}</li>
-                ))}
-              </ul>
+          )}
+
+          {/* Weather Analysis */}
+          {fieldAnalysisData.weatherData && (
+            <div className="analysis-section">
+              <h4>🌤️ Weather Impact Analysis</h4>
+              <div className="chart-container">
+                <WeatherChart data={fieldAnalysisData.weatherData} />
+              </div>
+              <div className="weather-insights">
+                <h5>Weather Insights</h5>
+                <ul>
+                  <li>📊 Complete weather data coverage for the selected period</li>
+                  <li>🌡️ Temperature variations may affect vegetation growth patterns</li>
+                  <li>💧 Precipitation levels correlate with NDVI fluctuations</li>
+                  <li>🌿 Optimal growing conditions identification helps with crop planning</li>
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {/* Field Summary */}
+          <div className="analysis-section">
+            <h4>📋 Field Summary & Recommendations</h4>
+            <div className="summary-grid">
+              <div className="summary-card">
+                <h5>🌾 Field Information</h5>
+                <p><strong>Field Name:</strong> {fieldAnalysisData.field.plot_name}</p>
+                <p><strong>Analysis Period:</strong> 6 months</p>
+                <p><strong>Data Quality:</strong> {fieldAnalysisData.ndviData ? 'High' : 'Limited'}</p>
+              </div>
+              
+              <div className="summary-card">
+                <h5>🔍 Key Findings</h5>
+                {fieldAnalysisData.ndviData && fieldAnalysisData.ndviData.length > 0 ? (
+                  <>
+                    <p>Average vegetation health: {getHealthStatus(fieldAnalysisData.ndviData.reduce((sum, item) => sum + item.ndvi, 0) / fieldAnalysisData.ndviData.length).status}</p>
+                    <p>Data reliability: {fieldAnalysisData.ndviData.length} measurement points</p>
+                    <p>Trend analysis: Available</p>
+                  </>
+                ) : (
+                  <p>Limited NDVI data available for comprehensive analysis</p>
+                )}
+              </div>
+              
+              <div className="summary-card">
+                <h5>📈 Next Steps</h5>
+                <p>• Monitor vegetation trends continuously</p>
+                <p>• Implement recommended management practices</p>
+                <p>• Schedule regular field assessments</p>
+                <p>• Consider soil testing for detailed insights</p>
+              </div>
             </div>
           </div>
+        </div>
+      ) : (
+        /* Original Crop Analysis Section */
+        <div className="crop-analysis-section">
+          <h3>Crop Pros & Cons by Season</h3>
+
+          <label>Select a Season:</label>
+          <select value={selectedSeason} onChange={handleSeasonChange}>
+            <option value="">--Select Season--</option>
+            <option value="monsoon">Monsoon</option>
+            <option value="summer">Summer</option>
+            <option value="winter">Winter</option>
+            <option value="spring">Spring</option>
+          </select>
+
+          {selectedSeason && (
+            <>
+              <label>Select a Crop:</label>
+              <select value={selectedCrop} onChange={handleCropChange}>
+                <option value="">--Select Crop--</option>
+                {Object.keys(cropData[selectedSeason]).map((crop) => (
+                  <option key={crop} value={crop}>
+                    {crop.charAt(0).toUpperCase() + crop.slice(1)}
+                  </option>
+                ))}
+              </select>
+            </>
+          )}
+
+          {cropInfo && (
+            <div className="crop-info">
+              <h3>Pros & Cons of {selectedCrop.charAt(0).toUpperCase() + selectedCrop.slice(1)}</h3>
+              <div className="pros-cons">
+                <div className="pros">
+                  <h4>Pros:</h4>
+                  <ul>
+                    {cropInfo.pros.map((pro, index) => (
+                      <li key={index}>✅ {pro}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="cons">
+                  <h4>Cons:</h4>
+                  <ul>
+                    {cropInfo.cons.map((con, index) => (
+                      <li key={index}>❌ {con}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

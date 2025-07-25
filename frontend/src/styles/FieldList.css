@@ -263,3 +263,41 @@
 .cancel-rename-btn:hover {
   background-color: var(--color-gray-300);
 }
+
+/* Compact mode styles for field reports */
+.field-list.compact {
+  padding: 1rem;
+  margin-bottom: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.field-list.compact .field-list-title {
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+}
+
+.field-list.compact .search-input {
+  padding: 0.5rem 0.75rem 0.5rem 2.5rem;
+  font-size: 0.9rem;
+}
+
+.field-list.compact .field-item {
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.field-list.compact .field-name {
+  font-size: 0.95rem;
+}
+
+.field-list.compact .field-area,
+.field-list.compact .field-date {
+  font-size: 0.8rem;
+}
+
+.field-list.compact .field-count {
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+}

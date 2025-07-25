@@ -6,7 +6,7 @@ import Register from "./pages/Register";
 import Homepage from "./pages/Homepage";
 import MonitorField from "./pages/MonitorField";
 import RequirementsForm from "./pages/RequirementsForm";
-import DataAnalysis from "./pages/DataAnalysis";
+import FieldReports from "./pages/FieldReports";
 import "./styles/theme.css";
 import AboutUs from "./pages/AboutUs";
 import CropSuggestion from "./pages/CropSuggestion";
@@ -27,7 +27,7 @@ const Layout = () => {
         <Route path="/AboutUs" element={<AboutUs />} />
         <Route path="/monitor-field" element={<MonitorField />} />
         <Route path="/requirements" element={<RequirementsForm />} />
-        <Route path="/data-analysis" element={<DataAnalysis />} />
+        <Route path="/field-reports" element={<FieldReports />} />
         <Route path="/crop-suggestion" element={<CropSuggestion />}/>
       </Routes>
     </>
