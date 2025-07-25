@@ -1,53 +1,606 @@
 /* src/styles/CropSuggestion.css */
-
-.crop-suggestion-container {
-  max-width: 800px;
-  margin: 40px auto;
-  padding: 30px;
-  background-color: #f9f9f9;
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+.crop-suggestion-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 2rem 1rem;
 }
 
-.crop-suggestion-container h2 {
-  font-size: 28px;
-  margin-bottom: 20px;
+.suggestions-header {
   text-align: center;
-  color: #2e7d32;
+  margin-bottom: 2rem;
+  color: white;
 }
 
-.crop-suggestion-details {
-  font-size: 18px;
-  line-height: 1.6;
+.suggestions-header .page-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.suggestions-header .page-subtitle {
+  font-size: 1.1rem;
+  opacity: 0.9;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.suggestions-content {
+  display: grid;
+  grid-template-columns: 350px 1fr;
+  gap: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  height: calc(100vh - 180px);
+}
+
+/* Sidebar Styles - Similar to FieldReports */
+.suggestions-sidebar {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  padding: 1.5rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  height: fit-content;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+}
+
+.sidebar-section {
+  margin-bottom: 2rem;
+}
+
+.sidebar-section:last-child {
+  margin-bottom: 0;
+}
+
+.sidebar-section h3 {
   color: #333;
-  margin-bottom: 20px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #e0e6ed;
 }
 
-.crop-highlight {
-  background-color: #d0f0c0;
-  padding: 10px 15px;
-  border-left: 5px solid #4caf50;
-  font-weight: bold;
-  font-size: 20px;
-  color: #2e7d32;
-  border-radius: 4px;
+/* Fields List Styles */
+.fields-list {
+  max-height: 300px;
+  overflow-y: auto;
 }
 
-.back-button {
-  display: inline-block;
-  padding: 10px 20px;
-  background-color: #4caf50;
+.field-item {
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  border-radius: 8px;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.field-item:hover {
+  background: #e9ecef;
+  border-color: #667eea;
+}
+
+.field-item.selected {
+  background: #e8f4fd;
+  border-color: #667eea;
+  border-width: 2px;
+}
+
+.field-info .field-name {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.field-info .field-meta {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.no-fields {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+}
+
+.create-field-btn {
+  background: #667eea;
   color: white;
   border: none;
+  padding: 0.75rem 1.5rem;
   border-radius: 8px;
   cursor: pointer;
-  font-size: 16px;
-  text-decoration: none;
-  transition: background-color 0.3s ease;
-  margin-top: 20px;
+  font-weight: 600;
+  margin-top: 1rem;
+  transition: all 0.3s ease;
 }
 
-.back-button:hover {
-  background-color: #388e3c;
+.create-field-btn:hover {
+  background: #5a67d8;
+  transform: translateY(-2px);
+}
+
+/* Field Details */
+.field-details {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  border-left: 4px solid #667eea;
+}
+
+.field-details p {
+  margin: 0.5rem 0;
+  color: #555;
+}
+
+/* Requirements Form - Similar to FieldReports sidebar */
+.requirements-form {
+  margin-bottom: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 0.6rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.generate-recommendations-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  border: none;
+  padding: 1rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.generate-recommendations-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.generate-recommendations-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.loading-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.error-message {
+  background: #f8d7da;
+  color: #721c24;
+  padding: 0.75rem;
+  border-radius: 6px;
+  border: 1px solid #f5c6cb;
+  font-size: 0.9rem;
+}
+
+/* Main Content Styles - Similar to FieldReports */
+.suggestions-main {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  padding: 2rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  overflow-y: auto;
+  max-height: calc(100vh - 200px);
+}
+
+.empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+}
+
+.empty-state-content {
+  max-width: 500px;
+}
+
+.empty-state-content h3 {
+  color: #333;
+  font-size: 1.8rem;
+  margin-bottom: 1rem;
+}
+
+.empty-state-content p {
+  color: #666;
+  font-size: 1.1rem;
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
+.empty-state-content ul {
+  text-align: left;
+  color: #555;
+  font-size: 1rem;
+  line-height: 1.8;
+}
+
+.field-preview {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-top: 1.5rem;
+  border-left: 4px solid #667eea;
+}
+
+.field-preview h4 {
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.field-preview p {
+  margin: 0.5rem 0;
+  color: #555;
+}
+
+/* Recommendations Content */
+.recommendations-content {
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.recommendations-header {
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 3px solid #e0e6ed;
+}
+
+.recommendations-header h2 {
+  color: #333;
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.recommendations-meta {
+  display: flex;
+  gap: 2rem;
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.recommendations-meta span {
+  background: #f8f9fa;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  border: 1px solid #e0e6ed;
+}
+
+/* Loading state in main content */
+.loading-state {
+  text-align: center;
+  padding: 3rem;
+  color: #666;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+/* Crop Recommendations Grid */
+.crop-recommendations {
+  display: grid;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.crop-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e9ecef;
+  transition: all 0.3s ease;
+}
+
+.crop-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.crop-card.high {
+  border-left: 4px solid #28a745;
+}
+
+.crop-card.medium {
+  border-left: 4px solid #ffc107;
+}
+
+.crop-card.low {
+  border-left: 4px solid #dc3545;
+}
+
+.crop-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.crop-header h4 {
+  color: #333;
+  font-size: 1.3rem;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.best-badge {
+  background: linear-gradient(135deg, #ffd700, #ffed4e);
+  color: #333;
+  padding: 0.25rem 0.75rem;
+  border-radius: 15px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-shadow: none;
+}
+
+.score-badge {
+  background: #667eea;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+/* Crop Details */
+.crop-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #f1f3f4;
+}
+
+.info-item .label {
+  font-weight: 600;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.info-item .value {
+  color: #333;
+  font-weight: 500;
+  text-transform: capitalize;
+  font-size: 0.9rem;
+}
+
+.compatibility-reasons {
+  margin-bottom: 1.5rem;
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.compatibility-reasons h5 {
+  color: #333;
+  margin-bottom: 0.75rem;
+  font-size: 1rem;
+}
+
+.compatibility-reasons ul {
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+.compatibility-reasons li {
+  margin-bottom: 0.5rem;
+  color: #555;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+/* Pros and Cons */
+.pros-cons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.pros, .cons {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.pros h5 {
+  color: #28a745;
+  margin-bottom: 0.75rem;
+  font-size: 1rem;
+}
+
+.cons h5 {
+  color: #dc3545;
+  margin-bottom: 0.75rem;
+  font-size: 1rem;
+}
+
+.pros ul, .cons ul {
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+.pros li, .cons li {
+  margin-bottom: 0.5rem;
+  color: #555;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+/* Action Buttons */
+.recommendations-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 2px solid #e0e6ed;
+}
+
+.primary-btn, .secondary-btn {
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.primary-btn {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+}
+
+.primary-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.secondary-btn {
+  background: #6c757d;
+  color: white;
+}
+
+.secondary-btn:hover {
+  background: #545b62;
+  transform: translateY(-2px);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .suggestions-content {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .suggestions-sidebar {
+    max-height: none;
+  }
+  
+  .suggestions-main {
+    max-height: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .crop-suggestion-page {
+    padding: 1rem 0.5rem;
+  }
+  
+  .suggestions-header .page-title {
+    font-size: 2rem;
+  }
+  
+  .suggestions-sidebar,
+  .suggestions-main {
+    padding: 1rem;
+  }
+  
+  .crop-info-grid,
+  .pros-cons {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .recommendations-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .primary-btn, .secondary-btn {
+    width: 100%;
+    max-width: 300px;
+    justify-content: center;
+  }
+  
+  .recommendations-meta {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
 }

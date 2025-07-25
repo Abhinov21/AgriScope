@@ -36,12 +36,20 @@ AgriScope combines **satellite imagery analysis**, **real-time weather monitorin
 - Temperature, precipitation, humidity, and solar radiation tracking
 - Historical weather data analysis and visualization
 
-### 4. **User Authentication**
+### 4. **Smart Crop Recommendations**
+- AI-powered crop suggestion system based on multiple parameters
+- Integration of field analysis data (NDVI, weather patterns)
+- User requirement assessment (budget, soil type, irrigation, experience)
+- Comprehensive crop database with pros/cons analysis
+- Seasonal compatibility and profitability scoring
+- Field-specific recommendations using satellite data
+
+### 5. **User Authentication**
 - JWT-based secure authentication system
 - User registration and login functionality
 - Protected routes and user-specific data access
 
-### 5. **Data Visualization**
+### 6. **Data Visualization**
 - Interactive charts for NDVI time-series analysis
 - Weather data trends and patterns
 - Real-time field condition monitoring
@@ -169,8 +177,9 @@ Launches the test runner in the interactive watch mode.
 1. **Login/Register**: Secure user authentication
 2. **Homepage**: Dashboard with field overview and key metrics
 3. **Monitor Field**: Core functionality for field analysis and NDVI processing
-4. **Data Analysis**: Crop comparison and agricultural insights
-5. **Requirements Form**: Field-specific requirement analysis
+4. **Field Reports**: Comprehensive 6-month analysis with advanced insights
+5. **Crop Suggestions**: AI-powered crop recommendations based on field analysis and user requirements
+6. **Requirements Form**: User input collection for personalized crop suggestions
 
 ### Components
 - **Interactive Map**: Field boundary drawing and visualization
