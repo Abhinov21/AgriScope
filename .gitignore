@@ -1,0 +1,72 @@
+# AgriScope - Agricultural Monitoring Platform
+# Root level gitignore
+
+# Environment variables (NEVER commit these!)
+**/.env
+**/.env.local
+**/.env.development
+**/.env.test
+**/.env.production
+
+# Dependencies
+**/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Production builds
+**/build/
+**/dist/
+
+# Logs
+logs
+*.log
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Database files (if any local db files)
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary files
+tmp/
+temp/
+
+# Coverage reports
+coverage/
+
+# Python cache (for backend Python processing)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
