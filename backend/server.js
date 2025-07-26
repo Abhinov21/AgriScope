@@ -3,6 +3,10 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 require("dotenv").config();
 
+// Initialize database tables
+require("./User"); // Create users table
+require("./db"); // Create AOI table (already included in db.js)
+
 const authRoutes = require("./routes/auth");
 const aoiRoutes = require("./routes/aoi");
 const weatherRoutes = require("./routes/weather");

@@ -1,4 +1,4 @@
-const db = require("../db");
+const db = require("./db");
 
 const createUserTable = `CREATE TABLE IF NOT EXISTS users (
   id INT AUTO_INCREMENT PRIMARY KEY,
