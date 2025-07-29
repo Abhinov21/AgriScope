@@ -72,7 +72,7 @@ const FieldReports = () => {
       const email = getUserEmail();
       if (!email) return;
 
-      const response = await axios.get(`http://localhost:5000/api/fields?email=${email}`);
+      const response = await axios.get(`http://localhost:3001/api/fields?email=${email}`);
       
       if (response.data.fields && Array.isArray(response.data.fields)) {
         setFields(response.data.fields);
@@ -279,7 +279,7 @@ const FieldReports = () => {
       try {
         // Note: NASA POWER API typically has 4-5 day processing delay
         // So we exclude recent days to ensure data availability
-        const weatherResponse = await axios.post("http://localhost:5000/api/weather/data", {
+        const weatherResponse = await axios.post("http://localhost:3001/api/weather/data", {
           coordinates: geoCoords,
           start_date: startDate.toISOString().split("T")[0],
           end_date: endDate.toISOString().split("T")[0],

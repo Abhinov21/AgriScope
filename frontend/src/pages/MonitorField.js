@@ -51,21 +51,38 @@ const MapCentering = ({ coordinates }) => {
         // Calculate field dimensions for dynamic padding
         const fieldAreaHectares = calculatePolygonArea(coordinates);
         
-        // Dynamic padding based on field size for optimal 1:2 ratio viewing
-        // Adjusted thresholds for real agricultural field sizes
+        // Dynamic padding based on field size for optimal viewing
+        // Much higher padding for 1:3 to 1:4 field-to-map ratio
         let paddingFactor;
-        if (fieldAreaHectares < 1) { // Very small field (< 1 hectare - gardens, small plots)
-          paddingFactor = 0.8; // 80% padding for context
-        } else if (fieldAreaHectares < 10) { // Small field (1-10 hectares - small farms)
-          paddingFactor = 0.7; // 70% padding 
-        } else if (fieldAreaHectares < 50) { // Medium field (10-50 hectares - typical farms)
-          paddingFactor = 0.6; // 60% padding for 1:2.5 ratio
-        } else if (fieldAreaHectares < 100) { // Large field (50-100 hectares)
-          paddingFactor = 0.5; // 50% padding for 1:2 ratio (your preferred ratio)
-        } else if (fieldAreaHectares < 500) { // Very large field (100-500 hectares)
-          paddingFactor = 0.4; // 40% padding for 1:1.7 ratio
-        } else { // Massive agricultural field (500+ hectares)
-          paddingFactor = 0.3; // 30% padding for 1:1.4 ratio
+        let maxZoom;
+        
+        if (fieldAreaHectares < 0.5) { // Very tiny field (< 0.5 hectare - garden plots)
+          paddingFactor = 3.5; // 350% padding - field takes ~1/4 of view
+          maxZoom = 14; // Very conservative zoom
+        } else if (fieldAreaHectares < 2) { // Small field (0.5-2 hectares - small plots)
+          paddingFactor = 3.0; // 300% padding - field takes ~1/4 of view
+          maxZoom = 14; // Very conservative zoom
+        } else if (fieldAreaHectares < 5) { // Small-medium field (2-5 hectares)
+          paddingFactor = 2.8; // 280% padding - field takes ~1/3 of view
+          maxZoom = 15; // Conservative zoom
+        } else if (fieldAreaHectares < 15) { // Medium field (5-15 hectares)
+          paddingFactor = 2.5; // 250% padding - field takes ~1/3 of view
+          maxZoom = 15; // Conservative zoom
+        } else if (fieldAreaHectares < 30) { // Medium-large field (15-30 hectares) - your border issue range
+          paddingFactor = 2.2; // 220% padding - field takes ~1/3 of view
+          maxZoom = 15; // Keep very conservative for border clarity
+        } else if (fieldAreaHectares < 60) { // Large field (30-60 hectares)
+          paddingFactor = 2.0; // 200% padding - field takes ~1/3 of view
+          maxZoom = 16; // Allow slightly more zoom
+        } else if (fieldAreaHectares < 100) { // Very large field (60-100 hectares)
+          paddingFactor = 1.8; // 180% padding - field takes ~1/3 of view
+          maxZoom = 16; // Good zoom level
+        } else if (fieldAreaHectares < 300) { // Huge field (100-300 hectares)
+          paddingFactor = 1.5; // 150% padding - field takes ~1/2 of view
+          maxZoom = 17; // More zoom for larger fields
+        } else { // Massive agricultural field (300+ hectares)
+          paddingFactor = 1.2; // 120% padding - field takes ~1/2 of view
+          maxZoom = 18; // Full zoom available
         }
         
         // Calculate dynamic padding based on map container size
@@ -79,7 +96,7 @@ const MapCentering = ({ coordinates }) => {
         // Fit bounds with animation and dynamic padding
         map.fitBounds(bounds, {
           padding: [paddingY, paddingX], // [top/bottom, left/right]
-          maxZoom: 18, // Prevent over-zooming for very small fields
+          maxZoom: maxZoom, // Dynamic zoom limit based on field size
           animate: true, // Smooth animation
           duration: 1.2 // Animation duration in seconds
         });
@@ -87,6 +104,7 @@ const MapCentering = ({ coordinates }) => {
         console.log(`📍 Map centered on field:`, {
           area: `${fieldAreaHectares.toFixed(2)} hectares`,
           padding: `${paddingFactor * 100}%`,
+          maxZoom: maxZoom,
           bounds: bounds.toBBoxString()
         });
         
@@ -97,7 +115,22 @@ const MapCentering = ({ coordinates }) => {
         const centerLat = coordinates.reduce((sum, coord) => sum + coord[1], 0) / coordinates.length;
         const centerLng = coordinates.reduce((sum, coord) => sum + coord[0], 0) / coordinates.length;
         
-        map.setView([centerLat, centerLng], 12, {
+        // Choose fallback zoom based on field size with very conservative levels
+        const fieldAreaHectares = calculatePolygonArea(coordinates);
+        let fallbackZoom;
+        if (fieldAreaHectares < 2) {
+          fallbackZoom = 13; // Very small fields - much more conservative
+        } else if (fieldAreaHectares < 15) {
+          fallbackZoom = 12; // Small-medium fields  
+        } else if (fieldAreaHectares < 30) {
+          fallbackZoom = 11; // Medium fields (your range) - very conservative
+        } else if (fieldAreaHectares < 100) {
+          fallbackZoom = 10; // Large fields
+        } else {
+          fallbackZoom = 9; // Very large fields
+        }
+        
+        map.setView([centerLat, centerLng], fallbackZoom, {
           animate: true,
           duration: 1.2
         });
@@ -172,7 +205,7 @@ const MonitorField = () => {
       const email = getUserEmail();
       if (!email) return;
 
-      const response = await axios.get(`http://localhost:5000/api/fields?email=${email}`);
+      const response = await axios.get(`http://localhost:3001/api/fields?email=${email}`);
 
       if (response.data.fields && Array.isArray(response.data.fields)) {
         setFields(response.data.fields);
@@ -199,13 +232,17 @@ const MonitorField = () => {
   useEffect(() => {
     fetchFields();
 
-    // Load previously drawn AOI if available
-    const savedAoi = localStorage.getItem("aoi");
-    if (savedAoi) {
-      try {
-        setAoiCoordinates(JSON.parse(savedAoi));
-      } catch (err) {
-        console.error("Error parsing saved AOI:", err);
+    // Load previously drawn AOI if available (user-specific)
+    const userEmail = getUserEmail();
+    if (userEmail) {
+      const aoiKey = `aoi_${userEmail}`;
+      const savedAoi = localStorage.getItem(aoiKey);
+      if (savedAoi) {
+        try {
+          setAoiCoordinates(JSON.parse(savedAoi));
+        } catch (err) {
+          console.error("Error parsing saved AOI:", err);
+        }
       }
     }
   }, []);
@@ -215,7 +252,14 @@ const MonitorField = () => {
     // Clear selected field when drawing new AOI
     setSelectedField(null);
     setAoiCoordinates(coords);
-    localStorage.setItem("aoi", JSON.stringify(coords));
+    
+    // Save AOI with user-specific key
+    const userEmail = getUserEmail();
+    if (userEmail) {
+      const aoiKey = `aoi_${userEmail}`;
+      localStorage.setItem(aoiKey, JSON.stringify(coords));
+    }
+    
     showNotification("Field area drawn. You can now save this field.");
     setDrawingMode(false);
   };
@@ -224,6 +268,14 @@ const MonitorField = () => {
   const enableDrawMode = () => {
     setSelectedField(null);
     setAoiCoordinates(null);
+    
+    // Clear any previously saved AOI for this user
+    const userEmail = getUserEmail();
+    if (userEmail) {
+      const aoiKey = `aoi_${userEmail}`;
+      localStorage.removeItem(aoiKey);
+    }
+    
     setDrawingMode(true);
     showNotification("Drawing mode enabled. Draw your field on the map.");
   };
@@ -244,7 +296,7 @@ const MonitorField = () => {
 
       setLoading(true);
 
-      const response = await axios.post("http://localhost:5000/api/fields", {
+      const response = await axios.post("http://localhost:3001/api/fields", {
         email: email,
         plot_name: fieldName,
         geojson_data: { type: "Polygon", coordinates: [aoiCoordinates] },
@@ -252,8 +304,13 @@ const MonitorField = () => {
 
       showNotification(response.data.message || "Field saved successfully");
 
-      // Clear the current AOI after saving
+      // Clear the current AOI after saving (both state and localStorage)
       setAoiCoordinates(null);
+      const userEmail = getUserEmail();
+      if (userEmail) {
+        const aoiKey = `aoi_${userEmail}`;
+        localStorage.removeItem(aoiKey);
+      }
 
       // Refresh fields list
       await fetchFields();
@@ -268,8 +325,13 @@ const MonitorField = () => {
   // Select field callback with enhanced feedback
   const handleFieldSelect = (field) => {
     setSelectedField(field);
-    // Clear any drawn AOI when a saved field is selected
+    // Clear any drawn AOI when a saved field is selected (both state and localStorage)
     setAoiCoordinates(null);
+    const userEmail = getUserEmail();
+    if (userEmail) {
+      const aoiKey = `aoi_${userEmail}`;
+      localStorage.removeItem(aoiKey);
+    }
     setDrawingMode(false);
     
     // Clear any existing NDVI data when switching fields
@@ -303,7 +365,7 @@ const MonitorField = () => {
 
       setLoading(true);
 
-      const response = await axios.delete(`http://localhost:5000/api/fields/${fieldId}`, {
+      const response = await axios.delete(`http://localhost:3001/api/fields/${fieldId}`, {
         data: { email },
       });
 
@@ -327,7 +389,7 @@ const MonitorField = () => {
 
       setLoading(true);
 
-      const response = await axios.put(`http://localhost:5000/api/fields/${fieldId}`, {
+      const response = await axios.put(`http://localhost:3001/api/fields/${fieldId}`, {
         email,
         plot_name: newName,
       });
@@ -354,7 +416,7 @@ const MonitorField = () => {
 
       console.log(`Attempting to delete field with ID: ${fieldId}, email: ${email}`);
 
-      const response = await axios.delete(`http://localhost:5000/api/fields/${fieldId}`, {
+      const response = await axios.delete(`http://localhost:3001/api/fields/${fieldId}`, {
         data: { email }
       });
 
@@ -401,7 +463,7 @@ const MonitorField = () => {
 
       setLoading(true);
 
-      const response = await axios.put(`http://localhost:5000/api/fields/${fieldId}`, {
+      const response = await axios.put(`http://localhost:3001/api/fields/${fieldId}`, {
         email,
         plot_name: newName
       });
@@ -486,7 +548,7 @@ const MonitorField = () => {
     try {
       setLoading(true);
       
-      const response = await axios.post("http://localhost:5000/api/weather/data", {
+      const response = await axios.post("http://localhost:3001/api/weather/data", {
         coordinates: geoCoords,
         start_date: startDate.toISOString().split("T")[0],
         end_date: endDate.toISOString().split("T")[0],

@@ -1,37 +1,56 @@
-const mysql = require("mysql2");
+const { Pool } = require("pg");
 
-const db = mysql.createConnection({
-  host: "localhost",  
-  user: "root",       
-  password: "root",       
-  database: "agriscope",
-  port: 3307         
+// Create PostgreSQL connection pool
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL || `postgresql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`,
+  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
 });
 
-db.connect((err) => {
+// Test connection
+pool.connect((err, client, release) => {
   if (err) {
     console.error("Database connection failed:", err);
     return;
   }
-  console.log("Connected to MySQL");
+  console.log("Connected to PostgreSQL");
+  release();
 });
 
-// Create AOI Table
+// Create Users Table (PostgreSQL syntax)
+const createUserTable = `CREATE TABLE IF NOT EXISTS users (
+  id SERIAL PRIMARY KEY,
+  username VARCHAR(255) NOT NULL,
+  email VARCHAR(255) NOT NULL UNIQUE,
+  password VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)`;
+
+// Create AOI Table (PostgreSQL syntax)
 const createAOITable = `CREATE TABLE IF NOT EXISTS aoi_plots (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  user_id INT NOT NULL,
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL,
   plot_name VARCHAR(255) NOT NULL,
-  geojson_data JSON NOT NULL,
+  geojson_data JSONB NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 )`;
 
-db.query(createAOITable, (err) => {
-  if (err) {
-    console.error("Error creating AOI table:", err);
-  } else {
+// Create tables sequentially to ensure proper foreign key setup
+async function createTables() {
+  try {
+    // Create users table first
+    await pool.query(createUserTable);
+    console.log("Users table ready");
+    
+    // Then create AOI table
+    await pool.query(createAOITable);
     console.log("AOI table ready");
+  } catch (error) {
+    console.error("Error creating tables:", error);
   }
-});
+}
 
-module.exports = db;
+// Initialize tables
+createTables();
+
+module.exports = pool;

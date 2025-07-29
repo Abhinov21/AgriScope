@@ -17,7 +17,7 @@ const Login = () => {
     setError("");
     
     try {
-      const response = await axios.post("http://localhost:5000/auth/login", { email, password });
+      const response = await axios.post("http://localhost:3001/auth/login", { email, password });
       
       // Create a user object using the email from the form and the token from the response
       const userData = { email, token: response.data.token };

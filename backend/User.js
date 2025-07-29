@@ -1,18 +1,6 @@
-const db = require("./db");
+const pool = require("./db");
 
-const createUserTable = `CREATE TABLE IF NOT EXISTS users (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  username VARCHAR(255) NOT NULL,
-  email VARCHAR(255) NOT NULL UNIQUE,
-  password VARCHAR(255) NOT NULL
-)`;
+// Users table is now created in db.js
+// This file can be used for user-related database operations
 
-db.query(createUserTable, (err) => {
-  if (err) {
-    console.error("Error creating users table:", err);
-  } else {
-    console.log("Users table ready");
-  }
-});
-
-module.exports = db;
+module.exports = pool;

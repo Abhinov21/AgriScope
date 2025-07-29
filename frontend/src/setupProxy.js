@@ -1,6 +1,7 @@
 const { createProxyMiddleware } = require('http-proxy-middleware');
 
 module.exports = function(app) {
+  // Proxy for NASA API
   app.use(
     '/api',
     createProxyMiddleware({
@@ -10,6 +11,16 @@ module.exports = function(app) {
       pathRewrite: {
         '^/api': '', // ✅ Remove `/api` prefix when hitting the target
       },
+    })
+  );
+
+  // Proxy for backend authentication and API routes
+  app.use(
+    ['/auth', '/api/fields', '/api/weather'],
+    createProxyMiddleware({
+      target: 'http://localhost:3001',
+      changeOrigin: true,
+      secure: false,
     })
   );
 };

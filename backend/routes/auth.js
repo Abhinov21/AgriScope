@@ -1,7 +1,7 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const db = require("../db");
+const pool = require("../db");
 require("dotenv").config();
 
 const router = express.Router();
@@ -15,20 +15,25 @@ router.post("/register", async (req, res) => {
   }
 
   try {
-    console.log("yes")
+    console.log("Registration attempt for:", email);
     const hashedPassword = await bcrypt.hash(password, 10);
-    const query = "INSERT INTO users (username, email, password) VALUES (?, ?, ?)";
+    const query = "INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING id";
 
-    db.query(query, [username, email, hashedPassword], (err) => {
-      if (err) {
-        if (err.code === "ER_DUP_ENTRY") {
-          return res.status(400).json({ message: "User already exists" });
-        }
-        return res.status(500).json({ message: "Database error" });
-      }
-      res.status(201).json({ message: "User registered successfully!" });
-    });
+    const result = await pool.query(query, [username, email, hashedPassword]);
+    
+    if (result.rows.length > 0) {
+      res.status(201).json({ 
+        message: "User registered successfully!",
+        userId: result.rows[0].id 
+      });
+    } else {
+      res.status(500).json({ message: "Registration failed" });
+    }
   } catch (error) {
+    console.error("Registration error:", error);
+    if (error.code === "23505") { // PostgreSQL unique violation
+      return res.status(400).json({ message: "User already exists" });
+    }
     res.status(500).json({ message: "Internal server error" });
   }
 });
@@ -41,25 +46,31 @@ router.post("/login", async (req, res) => {
   }
 
   try {
-    
-    const query = "SELECT * FROM users WHERE email = ?";
-    db.query(query, [email], async (err, results) => {
-      if (err) return res.status(500).json({ message: "Database error" });
+    const query = "SELECT * FROM users WHERE email = $1";
+    const result = await pool.query(query, [email]);
 
-      if (results.length === 0) {
-        return res.status(404).json({ message: "User not found" });
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const user = result.rows[0];
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: "1h" });
+    res.status(200).json({ 
+      message: "Login successful!", 
+      token,
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email
       }
-
-      const user = results[0];
-      const isPasswordValid = await bcrypt.compare(password, user.password);
-      if (!isPasswordValid) {
-        return res.status(400).json({ message: "Invalid credentials" });
-      }
-
-      const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: "1h" });
-      res.status(200).json({ message: "Login successful!", token });
     });
   } catch (error) {
+    console.error("Login error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });

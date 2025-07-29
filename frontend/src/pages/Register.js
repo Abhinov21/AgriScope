@@ -41,7 +41,7 @@ const Register = () => {
       setLoading(true);
       setError("");
       
-      const response = await axios.post("http://localhost:5000/auth/register", {
+      const response = await axios.post("http://localhost:3001/auth/register", {
         username: formData.username,
         email: formData.email,
         password: formData.password,
