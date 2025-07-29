@@ -1,0 +1,18 @@
+version: 2
+services:
+  - type: web
+    name: agriscope-frontend
+    env: node
+    region: oregon
+    plan: free
+    branch: main
+    rootDir: frontend
+    buildCommand: npm install --legacy-peer-deps && npm run build
+    startCommand: npm run start:prod
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: REACT_APP_API_URL
+        value: https://agriscope-backend.onrender.com
+      - key: REACT_APP_FLASK_API_URL
+        value: https://agriscope-backend-flask.onrender.com
