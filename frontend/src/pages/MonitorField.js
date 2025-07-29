@@ -9,6 +9,7 @@ import FieldList from "../components/FieldList";
 import DateRangePicker from "../components/DateRangePicker";
 import NDVITimeSeriesChart from "../components/NDVITimeSeriesChart";
 import WeatherChart from "../components/WeatherChart";
+import { getApiUrl, getFlaskApiUrl, API_CONFIG } from "../config/api";
 import "../styles/monitorField.css";
 import { useNavigate } from "react-router-dom";
 
@@ -205,7 +206,7 @@ const MonitorField = () => {
       const email = getUserEmail();
       if (!email) return;
 
-      const response = await axios.get(`http://localhost:3001/api/fields?email=${email}`);
+      const response = await axios.get(getApiUrl(`${API_CONFIG.ENDPOINTS.FIELDS}?email=${email}`));
 
       if (response.data.fields && Array.isArray(response.data.fields)) {
         setFields(response.data.fields);
@@ -296,7 +297,7 @@ const MonitorField = () => {
 
       setLoading(true);
 
-      const response = await axios.post("http://localhost:3001/api/fields", {
+      const response = await axios.post(getApiUrl(API_CONFIG.ENDPOINTS.FIELDS), {
         email: email,
         plot_name: fieldName,
         geojson_data: { type: "Polygon", coordinates: [aoiCoordinates] },
@@ -516,7 +517,7 @@ const MonitorField = () => {
       setLoading(true);
       setError("");
 
-      const response = await axios.post("http://127.0.0.1:5000/process_ndvi", {
+      const response = await axios.post(getFlaskApiUrl(API_CONFIG.ENDPOINTS.NDVI), {
         coordinates: geoJSON.coordinates[0],
         start_date: startDate.toISOString().split("T")[0],
         end_date: endDate.toISOString().split("T")[0],
@@ -548,7 +549,7 @@ const MonitorField = () => {
     try {
       setLoading(true);
       
-      const response = await axios.post("http://localhost:3001/api/weather/data", {
+      const response = await axios.post(getApiUrl(API_CONFIG.ENDPOINTS.WEATHER), {
         coordinates: geoCoords,
         start_date: startDate.toISOString().split("T")[0],
         end_date: endDate.toISOString().split("T")[0],

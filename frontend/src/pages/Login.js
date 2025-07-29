@@ -1,6 +1,7 @@
 // src/pages/Login.js
 import React, { useState } from "react";
 import axios from "axios";
+import { getApiUrl, API_CONFIG } from "../config/api";
 import "../styles/Auth.css";
 import { useNavigate, Link } from "react-router-dom";
 
@@ -17,7 +18,7 @@ const Login = () => {
     setError("");
     
     try {
-      const response = await axios.post("http://localhost:3001/auth/login", { email, password });
+      const response = await axios.post(getApiUrl(API_CONFIG.ENDPOINTS.AUTH.LOGIN), { email, password });
       
       // Create a user object using the email from the form and the token from the response
       const userData = { email, token: response.data.token };
