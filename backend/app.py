@@ -5,8 +5,12 @@ import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
+# Global flag to check if EE is available
+ee_available = False
+
 # ✅ Earth Engine initialization with service account support
 def initialize_ee():
+    global ee_available
     try:
         # Check if running in production with service account
         if os.environ.get('GOOGLE_APPLICATION_CREDENTIALS'):
@@ -38,18 +42,13 @@ def initialize_ee():
             # For development - use default authentication
             ee.Initialize(project='agriscope21')
             print("✅ Earth Engine initialized with default credentials!")
+        
+        ee_available = True
     except Exception as e:
         print(f"⚠️ Earth Engine initialization failed: {e}")
         print("⚠️ Running without Earth Engine - some features may not work")
-        global ee_available
         ee_available = False
-        return
 
-    global ee_available
-    ee_available = True
-
-# Global flag to check if EE is available
-ee_available = False
 initialize_ee()
 
 # ✅ Flask app setup
