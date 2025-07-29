@@ -1,4 +1,17 @@
 {
+  "name": "agriscope",
+  "version": "1.0.0",
+  "description": "AgriScope - Precision Agriculture Monitoring Platform",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "postinstall": "cd backend && npm install --production",
+    "build": "cd frontend && npm run build",
+    "dev": "cd backend && npm run dev"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "dependencies": {
     "react-datepicker": "^8.2.1"
   }
