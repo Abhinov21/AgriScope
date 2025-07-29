@@ -35,6 +35,8 @@
       "dest": "/index.html"
     }
   ],
+  "buildCommand": "npm run build",
+  "installCommand": "npm install --legacy-peer-deps",
   "env": {
     "REACT_APP_API_URL": "@react_app_api_url",
     "REACT_APP_FLASK_API_URL": "@react_app_flask_api_url"
