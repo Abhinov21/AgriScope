@@ -3,4 +3,5 @@ gunicorn
 flask-cors
 numpy
 matplotlib
+earthengine-api
 # add all other libraries you're using
