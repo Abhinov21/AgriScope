@@ -8,37 +8,58 @@ from flask_cors import CORS
 # ✅ Retry logic for Earth Engine initialization
 MAX_RETRIES = 5
 WAIT_SECONDS = 5
+EE_INITIALIZED = False
 
 def initialize_ee():
+    global EE_INITIALIZED
+    
+    # Check for service account key first
+    service_account_key = os.getenv('GOOGLE_SERVICE_ACCOUNT_KEY')
+    
+    if service_account_key:
+        print("🔑 Service account key found in environment variables")
+        try:
+            # Parse the service account key from environment variable
+            service_account_info = json.loads(service_account_key)
+            print(f"📧 Service account email: {service_account_info.get('client_email', 'N/A')}")
+            print(f"📋 Project ID from key: {service_account_info.get('project_id', 'N/A')}")
+            
+            # Use the project from service account if available, otherwise fallback
+            project_id = service_account_info.get('project_id', 'agriscope21')
+            
+            credentials = ee.ServiceAccountCredentials(
+                service_account_info['client_email'],
+                key_data=service_account_key
+            )
+            ee.Initialize(credentials, project=project_id)
+            print(f"✅ Earth Engine initialized with service account for project: {project_id}")
+            EE_INITIALIZED = True
+            return
+            
+        except json.JSONDecodeError as json_error:
+            print(f"❌ Invalid JSON in service account key: {json_error}")
+        except KeyError as key_error:
+            print(f"❌ Missing required field in service account key: {key_error}")
+        except Exception as sa_error:
+            print(f"❌ Service account authentication failed: {sa_error}")
+    else:
+        print("⚠️ No service account key found in GOOGLE_SERVICE_ACCOUNT_KEY environment variable")
+    
+    # Try default authentication methods
     for attempt in range(MAX_RETRIES):
         try:
-            # Try service account authentication first
-            service_account_key = os.getenv('GOOGLE_SERVICE_ACCOUNT_KEY')
-            if service_account_key:
-                try:
-                    # Parse the service account key from environment variable
-                    service_account_info = json.loads(service_account_key)
-                    credentials = ee.ServiceAccountCredentials(
-                        service_account_info['client_email'],
-                        key_data=service_account_key
-                    )
-                    ee.Initialize(credentials, project='agriscope21')
-                    print("✅ Earth Engine initialized with service account!")
-                    return
-                except Exception as sa_error:
-                    print(f"⚠️ Service account auth failed: {sa_error}")
-            
-            # Fallback to default initialization
+            print(f"🔄 Attempt {attempt + 1}: Trying default Earth Engine authentication...")
             ee.Initialize(project='agriscope21')
-            print("✅ Earth Engine initialized successfully!")
+            print("✅ Earth Engine initialized with default authentication!")
+            EE_INITIALIZED = True
             return
         except Exception as e:
             print(f"⚠️ Attempt {attempt + 1} failed: {e}")
             if attempt < MAX_RETRIES - 1:
                 time.sleep(WAIT_SECONDS)
     
-    # If all attempts fail, continue without Earth Engine for now
-    print("⚠️ Earth Engine initialization failed, but continuing with limited functionality...")
+    print("❌ All Earth Engine authentication methods failed")
+    EE_INITIALIZED = False
     return
 
 initialize_ee()
@@ -85,6 +106,10 @@ def process_ndvi():
 
         if len(coordinates) < 3:
             return jsonify({"error": "AOI must have at least three coordinates"}), 400
+
+        # ✅ Check if Earth Engine is available
+        if not EE_INITIALIZED:
+            return jsonify({"error": "Google Earth Engine is not initialized. Please check service account configuration."}), 503
 
         # ✅ Create AOI Polygon
         aoi = ee.Geometry.Polygon([coordinates])
@@ -160,6 +185,10 @@ def ndvi_time_series():
             return jsonify({"error": "Missing required fields"}), 400
         if len(coordinates) < 3:
             return jsonify({"error": "AOI must have at least three coordinates"}), 400
+
+        # ✅ Check if Earth Engine is available
+        if not EE_INITIALIZED:
+            return jsonify({"error": "Google Earth Engine is not initialized. Please check service account configuration."}), 503
 
         # Create AOI and apply a negative buffer (-20 m)
         aoi = ee.Geometry.Polygon([coordinates])
@@ -247,8 +276,47 @@ def ndvi_time_series():
         print("❌ Internal server error:", str(e))
         return jsonify({"error": f"Internal server error: {str(e)}"}), 500
 
+@app.route('/', methods=['GET'])
+def health_check():
+    return jsonify({
+        "status": "healthy",
+        "service": "AgriScope Flask Backend",
+        "earth_engine_status": "initialized" if EE_INITIALIZED else "not_available",
+        "message": "AgriScope backend is running successfully!"
+    })
 
+@app.route('/health', methods=['GET'])
+def health():
+    return jsonify({
+        "status": "healthy",
+        "earth_engine": EE_INITIALIZED,
+        "timestamp": time.time()
+    })
 
+@app.route('/debug/auth', methods=['GET'])
+def debug_auth():
+    """Debug endpoint to check authentication status"""
+    service_account_key = os.getenv('GOOGLE_SERVICE_ACCOUNT_KEY')
+    
+    debug_info = {
+        "earth_engine_initialized": EE_INITIALIZED,
+        "service_account_key_present": bool(service_account_key),
+        "service_account_key_length": len(service_account_key) if service_account_key else 0,
+    }
+    
+    if service_account_key:
+        try:
+            service_account_info = json.loads(service_account_key)
+            debug_info.update({
+                "service_account_email": service_account_info.get('client_email', 'N/A'),
+                "project_id_from_key": service_account_info.get('project_id', 'N/A'),
+                "key_type": service_account_info.get('type', 'N/A'),
+                "key_has_private_key": 'private_key' in service_account_info
+            })
+        except Exception as e:
+            debug_info["service_account_parse_error"] = str(e)
+    
+    return jsonify(debug_info)
 
 if __name__ == '__main__':
     app.run(port=5000, debug=True)
