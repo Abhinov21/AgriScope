@@ -9,7 +9,7 @@ import FieldList from "../components/FieldList";
 import DateRangePicker from "../components/DateRangePicker";
 import NDVITimeSeriesChart from "../components/NDVITimeSeriesChart";
 import WeatherChart from "../components/WeatherChart";
-import { getApiUrl, getFlaskApiUrl, API_CONFIG } from "../config/api";
+import { getApiUrl, getFlaskApiUrl } from "../config/api";
 import "../styles/monitorField.css";
 import { useNavigate } from "react-router-dom";
 
@@ -206,7 +206,7 @@ const MonitorField = () => {
       const email = getUserEmail();
       if (!email) return;
 
-      const response = await axios.get(getApiUrl(`${API_CONFIG.ENDPOINTS.FIELDS}?email=${email}`));
+      const response = await axios.get(`${getApiUrl(API_CONFIG.ENDPOINTS.FIELDS)}?email=${email}`);
 
       if (response.data.fields && Array.isArray(response.data.fields)) {
         setFields(response.data.fields);
@@ -366,7 +366,7 @@ const MonitorField = () => {
 
       setLoading(true);
 
-      const response = await axios.delete(`http://localhost:3001/api/fields/${fieldId}`, {
+      const response = await axios.delete(`${getApiUrl(API_CONFIG.ENDPOINTS.FIELDS)}/${fieldId}`, {
         data: { email },
       });
 
@@ -390,7 +390,7 @@ const MonitorField = () => {
 
       setLoading(true);
 
-      const response = await axios.put(`http://localhost:3001/api/fields/${fieldId}`, {
+      const response = await axios.put(`${getApiUrl()}/api/fields/${fieldId}`, {
         email,
         plot_name: newName,
       });
@@ -417,7 +417,7 @@ const MonitorField = () => {
 
       console.log(`Attempting to delete field with ID: ${fieldId}, email: ${email}`);
 
-      const response = await axios.delete(`http://localhost:3001/api/fields/${fieldId}`, {
+      const response = await axios.delete(`${getApiUrl()}/api/fields/${fieldId}`, {
         data: { email }
       });
 
@@ -464,7 +464,7 @@ const MonitorField = () => {
 
       setLoading(true);
 
-      const response = await axios.put(`http://localhost:3001/api/fields/${fieldId}`, {
+      const response = await axios.put(`${getApiUrl()}/api/fields/${fieldId}`, {
         email,
         plot_name: newName
       });
@@ -517,7 +517,7 @@ const MonitorField = () => {
       setLoading(true);
       setError("");
 
-      const response = await axios.post(getFlaskApiUrl(API_CONFIG.ENDPOINTS.NDVI), {
+      const response = await axios.post(`${getFlaskApiUrl()}/process_ndvi`, {
         coordinates: geoJSON.coordinates[0],
         start_date: startDate.toISOString().split("T")[0],
         end_date: endDate.toISOString().split("T")[0],
@@ -549,7 +549,7 @@ const MonitorField = () => {
     try {
       setLoading(true);
       
-      const response = await axios.post(getApiUrl(API_CONFIG.ENDPOINTS.WEATHER), {
+      const response = await axios.post(`${getApiUrl()}/api/weather/data`, {
         coordinates: geoCoords,
         start_date: startDate.toISOString().split("T")[0],
         end_date: endDate.toISOString().split("T")[0],
@@ -584,7 +584,7 @@ const MonitorField = () => {
       setError("");
       setLoading(true);
 
-      const response = await axios.post("http://127.0.0.1:5000/ndvi_time_series", {
+      const response = await axios.post(`${getFlaskApiUrl()}/ndvi_time_series`, {
         coordinates: geoJSON.coordinates[0],
         start_date: startDate.toISOString().split("T")[0],
         end_date: endDate.toISOString().split("T")[0],

@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { getApiUrl, API_CONFIG } from "../config/api";
 import "../styles/Auth.css";
+import { getApiUrl } from "../config/api";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -42,7 +42,7 @@ const Register = () => {
       setLoading(true);
       setError("");
       
-      const response = await axios.post(getApiUrl(API_CONFIG.ENDPOINTS.AUTH.REGISTER), {
+      const response = await axios.post(`${getApiUrl()}/auth/register`, {
         username: formData.username,
         email: formData.email,
         password: formData.password,

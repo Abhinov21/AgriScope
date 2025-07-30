@@ -3,8 +3,8 @@ import axios from 'axios';
 import { MapContainer, TileLayer } from 'react-leaflet';
 import MapWithDraw from './MapWithDraw';
 import NDVITileLayer from './NDVITileLayer';
-import { getFlaskApiUrl, API_CONFIG } from '../config/api';
 import '../styles/map.css';
+import { getFlaskApiUrl } from '../config/api';
 
 const MapComponent = () => {
   const [aoiCoordinates, setAoiCoordinates] = useState(null);
@@ -43,7 +43,7 @@ const MapComponent = () => {
 
     try {
       setError('');
-      const response = await axios.post(getFlaskApiUrl(API_CONFIG.ENDPOINTS.NDVI),
+      const response = await axios.post(`${getFlaskApiUrl()}/process_ndvi`,
         {
           coordinates: geoJSON.coordinates[0],
           start_date: startDate,

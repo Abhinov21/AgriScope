@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { getApiUrl, getFlaskApiUrl } from "../config/api";
 import "../styles/CropSuggestion.css";
 
 const CropSuggestion = () => {
@@ -198,7 +199,7 @@ const CropSuggestion = () => {
       const email = getUserEmail();
       if (!email) return;
 
-      const response = await axios.get(`http://localhost:3001/api/fields?email=${email}`);
+      const response = await axios.get(`${getApiUrl()}/api/fields?email=${email}`);
       
       if (response.data.fields && Array.isArray(response.data.fields)) {
         setFields(response.data.fields);
@@ -252,7 +253,7 @@ const CropSuggestion = () => {
       // Fetch NDVI data
       let ndviData = [];
       try {
-        const ndviResponse = await axios.post("http://127.0.0.1:5000/ndvi_time_series", {
+        const ndviResponse = await axios.post(`${getFlaskApiUrl()}/ndvi_time_series`, {
           coordinates: geoJSON.coordinates[0],
           start_date: startDate.toISOString().split("T")[0],
           end_date: endDate.toISOString().split("T")[0],
@@ -265,7 +266,7 @@ const CropSuggestion = () => {
       // Fetch weather data
       let weatherData = null;
       try {
-        const weatherResponse = await axios.post("http://localhost:3001/api/weather/data", {
+        const weatherResponse = await axios.post(`${getApiUrl()}/api/weather/data`, {
           coordinates: geoCoords,
           start_date: startDate.toISOString().split("T")[0],
           end_date: endDate.toISOString().split("T")[0],

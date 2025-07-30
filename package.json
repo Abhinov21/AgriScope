@@ -1,18 +1,5 @@
 {
-  "name": "agriscope-flask",
-  "version": "1.0.0",
-  "description": "AgriScope Flask Backend for Google Earth Engine",
-  "scripts": {
-    "start": "echo 'This is a Python Flask application. Use Python commands.'",
-    "build": "echo 'Python Flask app - no build needed'"
-  },
-  "engines": {
-    "node": ">=18.0.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Abhinov21/AgriScope.git"
-  },
-  "author": "Abhinov21",
-  "license": "MIT"
+  "dependencies": {
+    "react-datepicker": "^8.2.1"
+  }
 }

@@ -1,53 +1,23 @@
 import ee
 import json
 import time
-import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
-# Global flag to check if EE is available
-ee_available = False
+# ✅ Retry logic for Earth Engine initialization
+MAX_RETRIES = 5
+WAIT_SECONDS = 5
 
-# ✅ Earth Engine initialization with service account support
 def initialize_ee():
-    global ee_available
-    try:
-        # Check if running in production with service account
-        if os.environ.get('GOOGLE_APPLICATION_CREDENTIALS'):
-            # Use service account authentication
-            ee.Initialize()
-            print("✅ Earth Engine initialized with service account!")
-        elif os.environ.get('EE_PRIVATE_KEY'):
-            # Use environment variable for service account key
-            import json
-            service_account_info = {
-                "type": "service_account",
-                "project_id": os.environ.get('EE_PROJECT_ID', 'agriscope21'),
-                "private_key_id": os.environ.get('EE_PRIVATE_KEY_ID'),
-                "private_key": os.environ.get('EE_PRIVATE_KEY').replace('\\n', '\n'),
-                "client_email": os.environ.get('EE_CLIENT_EMAIL'),
-                "client_id": os.environ.get('EE_CLIENT_ID'),
-                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-                "token_uri": "https://oauth2.googleapis.com/token",
-                "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-                "client_x509_cert_url": f"https://www.googleapis.com/robot/v1/metadata/x509/{os.environ.get('EE_CLIENT_EMAIL')}"
-            }
-            credentials = ee.ServiceAccountCredentials(
-                email=service_account_info['client_email'],
-                key_data=json.dumps(service_account_info)
-            )
-            ee.Initialize(credentials=credentials, project=os.environ.get('EE_PROJECT_ID', 'agriscope21'))
-            print("✅ Earth Engine initialized with environment credentials!")
-        else:
-            # For development - use default authentication
+    for attempt in range(MAX_RETRIES):
+        try:
             ee.Initialize(project='agriscope21')
-            print("✅ Earth Engine initialized with default credentials!")
-        
-        ee_available = True
-    except Exception as e:
-        print(f"⚠️ Earth Engine initialization failed: {e}")
-        print("⚠️ Running without Earth Engine - some features may not work")
-        ee_available = False
+            print("✅ Earth Engine initialized successfully!")
+            return
+        except Exception as e:
+            print(f"⚠️ Attempt {attempt + 1} failed: {e}")
+            time.sleep(WAIT_SECONDS)
+    raise Exception("❌ Failed to initialize Earth Engine after multiple attempts.")
 
 initialize_ee()
 
@@ -76,34 +46,9 @@ def calculate_ndvi(image):
     ndvi = image.normalizedDifference(['B8', 'B4']).rename('NDVI')
     return image.addBands(ndvi).copyProperties(image, ['system:time_start'])
 
-@app.route('/health', methods=['GET'])
-def health_check():
-    """Health check endpoint"""
-    return jsonify({
-        "status": "healthy",
-        "earth_engine_available": ee_available,
-        "message": "Flask backend is running"
-    }), 200
-
-@app.route('/', methods=['GET'])
-def root():
-    """Root endpoint"""
-    return jsonify({
-        "service": "AgriScope Earth Engine Backend",
-        "status": "running",
-        "earth_engine_available": ee_available
-    }), 200
-
 @app.route('/process_ndvi', methods=['POST'])
 def process_ndvi():
     try:
-        # Check if Earth Engine is available
-        if not ee_available:
-            return jsonify({
-                "error": "Earth Engine is not available. Please configure authentication.",
-                "status": "service_unavailable"
-            }), 503
-
         # ✅ Receive request data
         data = request.get_json()
         if not data:
@@ -284,5 +229,4 @@ def ndvi_time_series():
 
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=False)
+    app.run(port=5000, debug=True)
