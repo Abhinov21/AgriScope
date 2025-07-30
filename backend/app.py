@@ -2,6 +2,7 @@ import ee
 import json
 import time
 import os
+from datetime import datetime
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
@@ -190,9 +191,10 @@ def ndvi_time_series():
         if not EE_INITIALIZED:
             return jsonify({"error": "Google Earth Engine is not initialized. Please check service account configuration."}), 503
 
-        # Create AOI and apply a negative buffer (-20 m)
+        # Create AOI and apply a small positive buffer or no buffer
         aoi = ee.Geometry.Polygon([coordinates])
-        buffered_geom = aoi.buffer(-20)
+        # Use positive buffer or no buffer to avoid geometry issues
+        buffered_geom = aoi.buffer(10)  # Small positive buffer instead of negative
         print("✅ Buffered AOI:", buffered_geom.getInfo())
 
         # Load Sentinel-2 SR collection filtered by the buffered geometry.
@@ -231,7 +233,7 @@ def ndvi_time_series():
             ndvi_dict = image.select('NDVI').reduceRegion(
                 reducer=ee.Reducer.mean(),
                 geometry=buffered_geom,
-                scale=10,         # adjust scale if needed
+                scale=5,         # Use higher resolution for better accuracy
                 bestEffort=True,
                 maxPixels=1e9
             )
@@ -317,6 +319,85 @@ def debug_auth():
             debug_info["service_account_parse_error"] = str(e)
     
     return jsonify(debug_info)
+
+@app.route('/api/debug/ndvi-stats/<float:lat>/<float:lng>', methods=['GET'])
+def debug_ndvi_stats(lat, lng):
+    """Debug endpoint to analyze NDVI statistics for a point"""
+    try:
+        # Initialize Earth Engine if not already done
+        if not hasattr(app, 'ee_initialized'):
+            initialize_ee()
+        
+        # Create point geometry with buffer
+        point = ee.Geometry.Point([lng, lat])
+        aoi = point.buffer(100)  # 100m buffer for analysis
+        
+        # Get recent date range
+        end_date = ee.Date(datetime.now().strftime('%Y-%m-%d'))
+        start_date = end_date.advance(-30, 'day')
+        
+        # Get Sentinel-2 collection
+        collection = ee.ImageCollection('COPERNICUS/S2_SR') \
+                      .filterBounds(aoi) \
+                      .filterDate(start_date, end_date) \
+                      .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 20))
+        
+        # Calculate NDVI for most recent image
+        def calculate_ndvi_stats(image):
+            ndvi = image.normalizedDifference(['B8', 'B4']).rename('NDVI')
+            
+            # Get various statistics
+            stats = ndvi.reduceRegion(
+                reducer=ee.Reducer.minMax().combine(
+                    ee.Reducer.mean(), sharedInputs=True
+                ).combine(
+                    ee.Reducer.stdDev(), sharedInputs=True
+                ).combine(
+                    ee.Reducer.percentile([10, 25, 50, 75, 90]), sharedInputs=True
+                ),
+                geometry=aoi,
+                scale=10,
+                maxPixels=1e9
+            )
+            
+            return {
+                'date': image.date().format('YYYY-MM-dd').getInfo(),
+                'stats': stats.getInfo()
+            }
+        
+        # Get collection info
+        collection_size = collection.size().getInfo()
+        
+        if collection_size == 0:
+            return jsonify({
+                'error': 'No Sentinel-2 images found for this location and date range',
+                'location': {'lat': lat, 'lng': lng},
+                'date_range': {
+                    'start': start_date.format('YYYY-MM-dd').getInfo(),
+                    'end': end_date.format('YYYY-MM-dd').getInfo()
+                }
+            })
+        
+        # Get stats for the most recent image
+        most_recent = collection.sort('system:time_start', False).first()
+        ndvi_stats = calculate_ndvi_stats(most_recent)
+        
+        return jsonify({
+            'location': {'lat': lat, 'lng': lng},
+            'date_range': {
+                'start': start_date.format('YYYY-MM-dd').getInfo(),
+                'end': end_date.format('YYYY-MM-dd').getInfo()
+            },
+            'collection_size': collection_size,
+            'most_recent_image': ndvi_stats,
+            'analysis': {
+                'note': 'Healthy vegetation typically shows NDVI values between 0.4-0.7',
+                'interpretation': 'Values below 0.3 may indicate stressed vegetation, bare soil, or water'
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(port=5000, debug=True)
