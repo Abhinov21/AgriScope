@@ -1,6 +1,7 @@
 import ee
 import json
 import time
+import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
@@ -11,13 +12,34 @@ WAIT_SECONDS = 5
 def initialize_ee():
     for attempt in range(MAX_RETRIES):
         try:
+            # Try service account authentication first
+            service_account_key = os.getenv('GOOGLE_SERVICE_ACCOUNT_KEY')
+            if service_account_key:
+                try:
+                    # Parse the service account key from environment variable
+                    service_account_info = json.loads(service_account_key)
+                    credentials = ee.ServiceAccountCredentials(
+                        service_account_info['client_email'],
+                        key_data=service_account_key
+                    )
+                    ee.Initialize(credentials, project='agriscope21')
+                    print("✅ Earth Engine initialized with service account!")
+                    return
+                except Exception as sa_error:
+                    print(f"⚠️ Service account auth failed: {sa_error}")
+            
+            # Fallback to default initialization
             ee.Initialize(project='agriscope21')
             print("✅ Earth Engine initialized successfully!")
             return
         except Exception as e:
             print(f"⚠️ Attempt {attempt + 1} failed: {e}")
-            time.sleep(WAIT_SECONDS)
-    raise Exception("❌ Failed to initialize Earth Engine after multiple attempts.")
+            if attempt < MAX_RETRIES - 1:
+                time.sleep(WAIT_SECONDS)
+    
+    # If all attempts fail, continue without Earth Engine for now
+    print("⚠️ Earth Engine initialization failed, but continuing with limited functionality...")
+    return
 
 initialize_ee()
 
