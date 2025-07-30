@@ -206,7 +206,7 @@ const MonitorField = () => {
       const email = getUserEmail();
       if (!email) return;
 
-      const response = await axios.get(`${getApiUrl(API_CONFIG.ENDPOINTS.FIELDS)}?email=${email}`);
+      const response = await axios.get(`${getApiUrl()}/api/fields?email=${email}`);
 
       if (response.data.fields && Array.isArray(response.data.fields)) {
         setFields(response.data.fields);
@@ -297,7 +297,7 @@ const MonitorField = () => {
 
       setLoading(true);
 
-      const response = await axios.post(getApiUrl(API_CONFIG.ENDPOINTS.FIELDS), {
+      const response = await axios.post(`${getApiUrl()}/api/fields`, {
         email: email,
         plot_name: fieldName,
         geojson_data: { type: "Polygon", coordinates: [aoiCoordinates] },
@@ -366,7 +366,7 @@ const MonitorField = () => {
 
       setLoading(true);
 
-      const response = await axios.delete(`${getApiUrl(API_CONFIG.ENDPOINTS.FIELDS)}/${fieldId}`, {
+      const response = await axios.delete(`${getApiUrl()}/api/fields/${fieldId}`, {
         data: { email },
       });
 
