@@ -292,7 +292,127 @@ const CropSuggestion = () => {
   };
 
   // Generate intelligent crop recommendations
-  const generateRecommendations = (requirements, fieldData = null) => {
+  // AI-powered crop recommendation function
+  const generateAIRecommendations = async (requirements, fieldData = null) => {
+    try {
+      setLoading(true);
+      setError("");
+
+      // Prepare field data for AI
+      const fieldInfo = {
+        location: requirements.location || "India",
+        area: fieldData?.area || "Not specified",
+        soil_type: requirements.soilType || "Not specified",
+        soil_ph: fieldData?.soilPH || "Not tested", 
+        irrigation: requirements.irrigation === 'yes' ? 'Available' : 'Not available',
+        experience: requirements.experience || "Not specified",
+        budget: requirements.budget ? `Rs. ${requirements.budget}` : "Not specified"
+      };
+
+      // Prepare weather data if available
+      const weatherInfo = fieldData?.weather ? {
+        avg_temp: fieldData.weather.avgTemp,
+        rainfall: fieldData.weather.rainfall,
+        humidity: fieldData.weather.humidity,
+        pattern: "Normal"
+      } : null;
+
+      // Prepare vegetation data if available
+      const vegetationInfo = fieldData ? {
+        ndvi: fieldData.averageNDVI,
+        soil_health: fieldData.averageNDVI > 0.6 ? "Good" : fieldData.averageNDVI > 0.4 ? "Average" : "Poor",
+        prev_performance: "Unknown"
+      } : null;
+
+      const response = await axios.post(`${getFlaskApiUrl()}/api/crop-recommendations`, {
+        field_data: fieldInfo,
+        weather_data: weatherInfo,
+        vegetation_data: vegetationInfo
+      });
+
+      if (response.data.error) {
+        // Fall back to hardcoded recommendations
+        console.warn("AI recommendations failed, using fallback:", response.data.error);
+        return generateFallbackRecommendations(requirements, fieldData);
+      }
+
+      // Transform AI response to match our UI format
+      return transformAIRecommendations(response.data.recommendations);
+
+    } catch (error) {
+      console.error("Error getting AI recommendations:", error);
+      setError("Failed to get AI recommendations. Using fallback method.");
+      // Fall back to original hardcoded method
+      return generateFallbackRecommendations(requirements, fieldData);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Transform AI response to match our UI format
+  const transformAIRecommendations = (aiRecommendations) => {
+    const transformed = [];
+
+    // Add primary crop
+    if (aiRecommendations.primary_crop) {
+      transformed.push(transformCropData(aiRecommendations.primary_crop, 1, aiRecommendations));
+    }
+
+    // Add secondary crop
+    if (aiRecommendations.secondary_crop) {
+      transformed.push(transformCropData(aiRecommendations.secondary_crop, 2, aiRecommendations));
+    }
+
+    // Add alternative crop
+    if (aiRecommendations.alternative_crop) {
+      transformed.push(transformCropData(aiRecommendations.alternative_crop, 3, aiRecommendations));
+    }
+
+    return transformed;
+  };
+
+  const transformCropData = (aiCrop, rank, aiRecommendations) => {
+    return {
+      name: aiCrop.name,
+      variety: aiCrop.variety || "Standard variety",
+      score: aiCrop.suitability_score || (100 - rank * 5),
+      reasons: aiCrop.growing_tips || ["AI recommended based on your field conditions"],
+      profitability: aiCrop.profit_potential || "Good",
+      season: aiCrop.planting_season || "Current season",
+      duration: aiCrop.harvest_time || "Standard duration",
+      waterRequirement: aiCrop.water_requirement || "Medium",
+      budget: aiCrop.investment_cost || "As per your budget",
+      marketPrice: aiCrop.market_price || "Current market rates",
+      expectedYield: aiCrop.expected_yield || "Good yield expected",
+      challenges: aiCrop.challenges || ["Normal farming challenges"],
+      pros: aiCrop.growing_tips || ["AI recommended benefits"],
+      cons: aiCrop.challenges || ["Standard challenges"],
+      marketDemand: aiCrop.market_demand || "Good demand",
+      aiGenerated: true,
+      generalAdvice: rank === 1 ? {
+        soilPreparation: aiRecommendations.general_advice?.soil_preparation,
+        fertilizerPlan: aiRecommendations.general_advice?.fertilizer_plan,
+        pestManagement: aiRecommendations.general_advice?.pest_management,
+        irrigationSchedule: aiRecommendations.general_advice?.irrigation_schedule,
+        companionCrops: aiRecommendations.general_advice?.companion_crops,
+        cropRotation: aiRecommendations.general_advice?.crop_rotation
+      } : null
+    };
+  };
+
+  // Main recommendation function that chooses between AI and fallback
+  const generateRecommendations = async (requirements, fieldData = null) => {
+    try {
+      // Try AI recommendations first
+      return await generateAIRecommendations(requirements, fieldData);
+    } catch (error) {
+      console.warn("Falling back to hardcoded recommendations:", error);
+      return generateFallbackRecommendations(requirements, fieldData);
+    }
+  };
+
+  // Fallback to original hardcoded recommendations
+  const generateFallbackRecommendations = (requirements, fieldData = null) => {
     let scored = [];
 
     Object.entries(cropDatabase).forEach(([key, crop]) => {
@@ -396,8 +516,9 @@ const CropSuggestion = () => {
     
     // Auto-generate recommendations with current requirements and field data
     if (userRequirements.budget || userRequirements.soilType) {
-      const newRecommendations = generateRecommendations(userRequirements, analysisData);
-      setRecommendations(newRecommendations);
+      generateRecommendations(userRequirements, analysisData).then(newRecommendations => {
+        setRecommendations(newRecommendations);
+      });
     }
   };
 
@@ -413,16 +534,18 @@ const CropSuggestion = () => {
       }));
       
       // Generate initial recommendations
-      const initialRecommendations = generateRecommendations(formData);
-      setRecommendations(initialRecommendations);
+      generateRecommendations(formData).then(initialRecommendations => {
+        setRecommendations(initialRecommendations);
+      });
     }
   }, []);
 
   // Update recommendations when requirements change
   useEffect(() => {
     if (Object.keys(userRequirements).length > 0) {
-      const newRecommendations = generateRecommendations(userRequirements, fieldAnalysisData);
-      setRecommendations(newRecommendations);
+      generateRecommendations(userRequirements, fieldAnalysisData).then(newRecommendations => {
+        setRecommendations(newRecommendations);
+      });
     }
   }, [userRequirements, fieldAnalysisData]);
 
@@ -562,8 +685,9 @@ const CropSuggestion = () => {
             <button 
               onClick={() => {
                 if (selectedField) {
-                  const newRecommendations = generateRecommendations(userRequirements, fieldAnalysisData);
-                  setRecommendations(newRecommendations);
+                  generateRecommendations(userRequirements, fieldAnalysisData).then(newRecommendations => {
+                    setRecommendations(newRecommendations);
+                  });
                 } else {
                   setError("Please select a field first");
                 }

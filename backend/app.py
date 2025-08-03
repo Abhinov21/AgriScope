@@ -6,6 +6,14 @@ from datetime import datetime, timedelta
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
+# Import AI service
+try:
+    from ai_crop_service import generate_ai_crop_recommendations, get_fallback_recommendations
+    AI_SERVICE_AVAILABLE = True
+except ImportError as e:
+    print(f"⚠️ AI service not available: {e}")
+    AI_SERVICE_AVAILABLE = False
+
 # ✅ Retry logic for Earth Engine initialization
 MAX_RETRIES = 5
 WAIT_SECONDS = 5
@@ -685,6 +693,66 @@ def list_indices():
         "indices": indices,
         "total_count": len(indices)
     })
+
+@app.route('/api/crop-recommendations', methods=['POST'])
+def get_ai_crop_recommendations():
+    """
+    Generate AI-powered crop recommendations based on field data, weather, and vegetation indices.
+    
+    Expected JSON payload:
+    {
+        "field_data": {
+            "location": "Maharashtra, India",
+            "area": 2.5,
+            "soil_type": "Black Cotton Soil",
+            "soil_ph": 7.2,
+            "irrigation": "Drip irrigation",
+            "experience": "5 years",
+            "budget": "Rs. 50,000"
+        },
+        "weather_data": {
+            "avg_temp": 28,
+            "rainfall": 650,
+            "humidity": 75,
+            "pattern": "Normal monsoon expected"
+        },
+        "vegetation_data": {
+            "ndvi": 0.65,
+            "soil_health": "Good",
+            "prev_performance": "Above average"
+        }
+    }
+    """
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "No input data provided"}), 400
+            
+        field_data = data.get('field_data', {})
+        weather_data = data.get('weather_data')
+        vegetation_data = data.get('vegetation_data')
+        
+        if not field_data:
+            return jsonify({"error": "Field data is required"}), 400
+            
+        # Generate AI recommendations
+        if AI_SERVICE_AVAILABLE:
+            recommendations = generate_ai_crop_recommendations(
+                field_data=field_data,
+                weather_data=weather_data,
+                vegetation_data=vegetation_data
+            )
+        else:
+            recommendations = get_fallback_recommendations()
+            
+        return jsonify(recommendations), 200
+        
+    except Exception as e:
+        print(f"❌ Error generating crop recommendations: {e}")
+        return jsonify({
+            "error": f"Failed to generate recommendations: {str(e)}",
+            "fallback": get_fallback_recommendations()
+        }), 500
 
 @app.route('/debug/auth', methods=['GET'])
 def debug_auth():

@@ -59,15 +59,16 @@ const DateRangePicker = ({ startDate, endDate, onStartChange, onEndChange }) => 
         newStartDate.setDate(newEndDate.getDate() - 90);
         break;
       case "thisMonth":
-        newEndDate = new Date(latestReliableDate);
+        // Start of current month
         newStartDate = new Date(today.getFullYear(), today.getMonth(), 1);
-        // If start of month is after our reliable date, use previous month
-        if (newStartDate > newEndDate) {
-          newStartDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-        }
+        // End of current month (but not beyond reliable date)
+        const endOfThisMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        newEndDate = endOfThisMonth > latestReliableDate ? latestReliableDate : endOfThisMonth;
         break;
       case "lastMonth":
+        // Start of last month
         newStartDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+        // End of last month
         newEndDate = new Date(today.getFullYear(), today.getMonth(), 0);
         // If end of last month is after our reliable date, adjust end date
         if (newEndDate > latestReliableDate) {

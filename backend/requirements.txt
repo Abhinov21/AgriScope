@@ -6,3 +6,4 @@ matplotlib
 earthengine-api
 requests
 python-dotenv
+google-generativeai
