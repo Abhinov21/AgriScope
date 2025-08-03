@@ -2,7 +2,7 @@ import ee
 import json
 import time
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
@@ -69,6 +69,18 @@ initialize_ee()
 app = Flask(__name__)
 # CORS(app, resources={r"/process_ndvi": {"origins": "*"}})
 CORS(app)
+
+# Health check endpoint for Render
+@app.route('/', methods=['GET'])
+@app.route('/health', methods=['GET'])
+def health_check():
+    """Health check endpoint for deployment platforms"""
+    return jsonify({
+        'status': 'healthy',
+        'service': 'AgriScope Flask Backend',
+        'earth_engine_status': 'initialized' if EE_INITIALIZED else 'failed',
+        'timestamp': datetime.now().isoformat()
+    }), 200
 
 # ✅ Generalized Vegetation Index Calculation Function
 def calculate_vegetation_index(image, index_name):
@@ -386,6 +398,27 @@ def process_index():
         if len(coordinates) < 3:
             return jsonify({"error": "AOI must have at least three coordinates"}), 400
 
+        # ✅ Date validation - Sentinel-2 data has ~5 day delay
+        try:
+            start_dt = datetime.strptime(start_date, '%Y-%m-%d')
+            end_dt = datetime.strptime(end_date, '%Y-%m-%d')
+            today = datetime.now()
+            
+            # Check if end date is too recent (less than 5 days ago)
+            days_ago = (today - end_dt).days
+            if days_ago < 5:
+                return jsonify({
+                    "error": f"End date is too recent. Satellite data is typically delayed by 4-5 days. Please select a date before {(today - timedelta(days=5)).strftime('%Y-%m-%d')}",
+                    "suggested_end_date": (today - timedelta(days=5)).strftime('%Y-%m-%d')
+                }), 400
+                
+            # Check if date range is valid
+            if start_dt >= end_dt:
+                return jsonify({"error": "Start date must be before end date"}), 400
+                
+        except ValueError:
+            return jsonify({"error": "Invalid date format. Use YYYY-MM-DD"}), 400
+
         # ✅ Check if Earth Engine is available
         if not EE_INITIALIZED:
             return jsonify({"error": "Google Earth Engine is not initialized. Please check service account configuration."}), 503
@@ -471,6 +504,27 @@ def index_time_series():
             return jsonify({"error": "Missing required fields: coordinates, start_date, end_date"}), 400
         if len(coordinates) < 3:
             return jsonify({"error": "AOI must have at least three coordinates"}), 400
+
+        # ✅ Date validation - Sentinel-2 data has ~5 day delay
+        try:
+            start_dt = datetime.strptime(start_date, '%Y-%m-%d')
+            end_dt = datetime.strptime(end_date, '%Y-%m-%d')
+            today = datetime.now()
+            
+            # Check if end date is too recent (less than 5 days ago)
+            days_ago = (today - end_dt).days
+            if days_ago < 5:
+                return jsonify({
+                    "error": f"End date is too recent. Satellite data is typically delayed by 4-5 days. Please select a date before {(today - timedelta(days=5)).strftime('%Y-%m-%d')}",
+                    "suggested_end_date": (today - timedelta(days=5)).strftime('%Y-%m-%d')
+                }), 400
+                
+            # Check if date range is valid
+            if start_dt >= end_dt:
+                return jsonify({"error": "Start date must be before end date"}), 400
+                
+        except ValueError:
+            return jsonify({"error": "Invalid date format. Use YYYY-MM-DD"}), 400
 
         # ✅ Check if Earth Engine is available
         if not EE_INITIALIZED:

@@ -1,7 +1,7 @@
 // API Configuration Constants
 export const API_CONFIG = {
   BASE_URL: process.env.REACT_APP_API_URL || "http://localhost:3001",
-  FLASK_BASE_URL: process.env.REACT_APP_FLASK_API_URL || "http://127.0.0.1:5000",
+  FLASK_BASE_URL: process.env.REACT_APP_FLASK_API_URL || "https://agriscope-backend-flask.onrender.com",
   ENDPOINTS: {
     AUTH: {
       LOGIN: "/auth/login",
