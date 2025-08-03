@@ -156,13 +156,15 @@ const MonitorField = () => {
   const [startDate, setStartDate] = useState(new Date("2025-03-01"));
   const [endDate, setEndDate] = useState(new Date("2025-03-31"));
 
-  // NDVI state
-  const [ndviUrl, setNdviUrl] = useState("");
+  // Vegetation Index state (generalized from NDVI)
+  const [selectedIndex, setSelectedIndex] = useState("NDVI");
+  const [indexTileUrl, setIndexTileUrl] = useState("");
   const [timeSeriesData, setTimeSeriesData] = useState([]);
+  const [availableIndices, setAvailableIndices] = useState({});
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
-  const [activeTab, setActiveTab] = useState("ndvi");
+  const [activeTab, setActiveTab] = useState("analysis");
 
   // Weather data state
   const [weatherData, setWeatherData] = useState(null);
@@ -182,6 +184,25 @@ const MonitorField = () => {
 
     navigate("/login");
     return null;
+  };
+
+  // Fetch available vegetation indices from backend
+  const fetchAvailableIndices = async () => {
+    try {
+      const response = await axios.get(`${getFlaskApiUrl()}/api/indices/list`);
+      setAvailableIndices(response.data.indices);
+    } catch (err) {
+      console.error("Error fetching available indices:", err);
+      // Fallback to default indices if API fails
+      setAvailableIndices({
+        'NDVI': { name: 'Normalized Difference Vegetation Index' },
+        'EVI': { name: 'Enhanced Vegetation Index' },
+        'SAVI': { name: 'Soil-Adjusted Vegetation Index' },
+        'ARVI': { name: 'Atmospherically Resistant Vegetation Index' },
+        'MAVI': { name: 'Moisture-Adjusted Vegetation Index' },
+        'SR': { name: 'Simple Ratio' }
+      });
+    }
   };
 
   // Show notifications
@@ -232,6 +253,7 @@ const MonitorField = () => {
   // Initialize component
   useEffect(() => {
     fetchFields();
+    fetchAvailableIndices(); // Load available vegetation indices
 
     // Load previously drawn AOI if available (user-specific)
     const userEmail = getUserEmail();
@@ -335,8 +357,8 @@ const MonitorField = () => {
     }
     setDrawingMode(false);
     
-    // Clear any existing NDVI data when switching fields
-    setNdviUrl("");
+    // Clear any existing vegetation index data when switching fields
+    setIndexTileUrl("");
     setTimeSeriesData([]);
     setWeatherData(null);
     
@@ -497,9 +519,8 @@ const MonitorField = () => {
     return coordinates;
   };
 
-  // Generate NDVI overlay (unchanged)
-  const handleSubmitNDVI = async () => {
-    // Same code as before
+  // Generate vegetation index overlay (generalized from NDVI)
+  const handleSubmitAnalysis = async () => {
     const geoCoords = selectedField?.geojson_data?.coordinates[0] || aoiCoordinates;
     if (!geoCoords || !startDate || !endDate) {
       showNotification("Please provide a field and date range.", true);
@@ -517,22 +538,23 @@ const MonitorField = () => {
       setLoading(true);
       setError("");
 
-      const response = await axios.post(`${getFlaskApiUrl()}/process_ndvi`, {
+      const response = await axios.post(`${getFlaskApiUrl()}/api/indices/calculate`, {
         coordinates: geoJSON.coordinates[0],
         start_date: startDate.toISOString().split("T")[0],
         end_date: endDate.toISOString().split("T")[0],
+        index_name: selectedIndex,
       });
 
       const { tile_url } = response.data;
       if (tile_url) {
-        setNdviUrl(tile_url);
-        showNotification("NDVI overlay generated successfully");
+        setIndexTileUrl(tile_url);
+        showNotification(`${selectedIndex} overlay generated successfully`);
       } else {
-        showNotification("Failed to generate NDVI tiles: No URL returned", true);
+        showNotification(`Failed to generate ${selectedIndex} tiles: No URL returned`, true);
       }
     } catch (err) {
-      console.error("Error fetching NDVI:", err);
-      showNotification(`Failed to fetch NDVI data: ${err.message || "Unknown error"}`, true);
+      console.error(`Error fetching ${selectedIndex}:`, err);
+      showNotification(`Failed to fetch ${selectedIndex} data: ${err.message || "Unknown error"}`, true);
     } finally {
       setLoading(false);
     }
@@ -565,7 +587,7 @@ const MonitorField = () => {
     }
   };
 
-  // Fetch NDVI time series data (modified to also fetch weather data)
+  // Fetch vegetation index time series data (generalized)
   const fetchTimeSeries = async () => {
     const geoCoords = selectedField?.geojson_data?.coordinates[0] || aoiCoordinates;
     if (!geoCoords || !startDate || !endDate) {
@@ -584,10 +606,11 @@ const MonitorField = () => {
       setError("");
       setLoading(true);
 
-      const response = await axios.post(`${getFlaskApiUrl()}/ndvi_time_series`, {
+      const response = await axios.post(`${getFlaskApiUrl()}/api/indices/timeseries`, {
         coordinates: geoJSON.coordinates[0],
         start_date: startDate.toISOString().split("T")[0],
         end_date: endDate.toISOString().split("T")[0],
+        index_name: selectedIndex,
       });
 
       setTimeSeriesData(response.data.time_series);
@@ -596,10 +619,10 @@ const MonitorField = () => {
       await fetchWeatherData();
       
       setShowPopup(true);
-      showNotification("Time series data generated successfully");
+      showNotification(`${selectedIndex} time series data generated successfully`);
     } catch (err) {
-      console.error("Error fetching time series:", err);
-      showNotification(`Failed to fetch NDVI time series: ${err.message || "Unknown error"}`, true);
+      console.error(`Error fetching ${selectedIndex} time series:`, err);
+      showNotification(`Failed to fetch ${selectedIndex} time series: ${err.message || "Unknown error"}`, true);
     } finally {
       setLoading(false);
     }
@@ -675,9 +698,40 @@ const MonitorField = () => {
           </div>
 
           <div className="sidebar-section">
+            <h3>🌱 Vegetation Index Selection</h3>
+            <div className="index-selector">
+              <label htmlFor="index-select">Choose Index:</label>
+              <select 
+                id="index-select"
+                value={selectedIndex}
+                onChange={(e) => setSelectedIndex(e.target.value)}
+                className="index-dropdown"
+              >
+                {Object.entries(availableIndices).map(([key, index]) => (
+                  <option key={key} value={key}>
+                    {key} - {index.name}
+                  </option>
+                ))}
+              </select>
+              <div className="index-description">
+                {availableIndices[selectedIndex]?.description && (
+                  <p className="description-text">
+                    💡 {availableIndices[selectedIndex].description}
+                  </p>
+                )}
+                {availableIndices[selectedIndex]?.optimal_range && (
+                  <p className="range-text">
+                    📊 Optimal range: {availableIndices[selectedIndex].optimal_range[0]} - {availableIndices[selectedIndex].optimal_range[1]}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="sidebar-section">
             <h3>🛰️ Satellite Analysis</h3>
             <button 
-              onClick={handleSubmitNDVI} 
+              onClick={handleSubmitAnalysis} 
               disabled={loading || (!selectedField && !aoiCoordinates)} 
               className="analysis-btn ndvi-btn"
             >
@@ -686,7 +740,7 @@ const MonitorField = () => {
                   <span className="loading-spinner"></span>
                   Generating...
                 </>
-              ) : "📊 Generate NDVI Overlay"}
+              ) : `📊 Generate ${selectedIndex} Overlay`}
             </button>
             
             <button 
@@ -773,8 +827,8 @@ const MonitorField = () => {
               <MapCentering coordinates={selectedField.geojson_data.coordinates[0]} />
             )}
             
-            {/* NDVI overlay */}
-            {ndviUrl && <NDVITileLayer ndviUrl={ndviUrl} />}
+            {/* Vegetation Index overlay (generalized from NDVI) */}
+            {indexTileUrl && <NDVITileLayer ndviUrl={indexTileUrl} />}
           </MapContainer>
         </div>
       </div>
@@ -789,10 +843,10 @@ const MonitorField = () => {
             
             <div className="popup-tabs">
               <button 
-                className={`popup-tab ${activeTab === 'ndvi' ? 'active' : ''}`}
-                onClick={() => setActiveTab('ndvi')}
+                className={`popup-tab ${activeTab === 'analysis' ? 'active' : ''}`}
+                onClick={() => setActiveTab('analysis')}
               >
-                📊 NDVI Analysis
+                📊 {selectedIndex} Analysis
               </button>
               <button 
                 className={`popup-tab ${activeTab === 'weather' ? 'active' : ''}`}
@@ -803,13 +857,17 @@ const MonitorField = () => {
             </div>
             
             <div className="popup-content-body">
-              {activeTab === 'ndvi' ? (
-                <div className="ndvi-content">
-                  <h3>NDVI Time Series Analysis</h3>
+              {activeTab === 'analysis' ? (
+                <div className="analysis-content">
+                  <h3>{selectedIndex} Time Series Analysis</h3>
                   {timeSeriesData.length > 0 ? (
-                    <NDVITimeSeriesChart data={timeSeriesData} />
+                    <NDVITimeSeriesChart 
+                      data={timeSeriesData} 
+                      indexName={selectedIndex}
+                      indexInfo={availableIndices[selectedIndex]}
+                    />
                   ) : (
-                    <p className="no-data">No NDVI time series data available for the selected period.</p>
+                    <p className="no-data">No {selectedIndex} time series data available for the selected period.</p>
                   )}
                 </div>
               ) : (

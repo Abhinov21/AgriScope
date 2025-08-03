@@ -69,6 +69,84 @@ initialize_ee()
 app = Flask(__name__)
 # CORS(app, resources={r"/process_ndvi": {"origins": "*"}})
 CORS(app)
+
+# ✅ Generalized Vegetation Index Calculation Function
+def calculate_vegetation_index(image, index_name):
+    """
+    Calculate a specified vegetation index using GEE server-side expressions.
+    
+    Args:
+        image: ee.Image with bands B2 (Blue), B4 (Red), B8 (NIR), B11 (SWIR)
+        index_name: String name of the index to calculate
+        
+    Returns:
+        ee.Image with the calculated index
+    """
+    # Define the expressions for each vegetation index
+    expressions = {
+        'SR': 'NIR / R',
+        'NDVI': '(NIR - R) / (NIR + R)',
+        'EVI': '2.5 * ((NIR - R) / (NIR + 6 * R - 7.5 * B + 1))',
+        'SAVI': '((NIR - R) / (NIR + R + 0.5)) * 1.5',  # Using L=0.5
+        'ARVI': '(NIR - (2 * R - B)) / (NIR + (2 * R - B))',
+        'MAVI': '(NIR - R) / (NIR + R + SWIR)'
+    }
+    
+    if index_name not in expressions:
+        raise ValueError(f"Unknown index name: {index_name}. Available indices: {list(expressions.keys())}")
+    
+    # Create band dictionary for expression
+    band_dict = {
+        'B': image.select('B2'),     # Blue
+        'R': image.select('B4'),     # Red  
+        'NIR': image.select('B8'),   # Near Infrared
+        'SWIR': image.select('B11')  # Short Wave Infrared
+    }
+    
+    # Calculate the index using the expression
+    index_image = image.expression(expressions[index_name], band_dict).rename(index_name)
+    
+    return index_image
+
+def get_visualization_params(index_name):
+    """
+    Get appropriate visualization parameters for each vegetation index.
+    
+    Args:
+        index_name: String name of the index
+        
+    Returns:
+        Dictionary with visualization parameters
+    """
+    vis_params = {
+        'SR': {
+            'min': 0, 'max': 8,
+            'palette': ['red', 'orange', 'yellow', 'green', 'darkgreen']
+        },
+        'NDVI': {
+            'min': -0.2, 'max': 1.0,
+            'palette': ['blue', 'white', 'yellow', 'green', 'darkgreen']
+        },
+        'EVI': {
+            'min': -0.2, 'max': 1.0,
+            'palette': ['brown', 'yellow', 'lightgreen', 'green', 'darkgreen']
+        },
+        'SAVI': {
+            'min': -0.2, 'max': 1.0,
+            'palette': ['purple', 'blue', 'cyan', 'yellow', 'red']
+        },
+        'ARVI': {
+            'min': -0.2, 'max': 1.0,
+            'palette': ['red', 'orange', 'yellow', 'lightgreen', 'darkgreen']
+        },
+        'MAVI': {
+            'min': -0.2, 'max': 1.0,
+            'palette': ['red', 'yellow', 'lightblue', 'blue', 'darkblue']
+        }
+    }
+    
+    return vis_params.get(index_name, vis_params['NDVI'])  # Default to NDVI params
+
 # ✅ Function to mask clouds using Sentinel-2 L2A SCL band
 def mask_clouds(image):
     """
@@ -277,6 +355,282 @@ def ndvi_time_series():
     except Exception as e:
         print("❌ Internal server error:", str(e))
         return jsonify({"error": f"Internal server error: {str(e)}"}), 500
+
+@app.route('/api/indices/calculate', methods=['POST'])
+def process_index():
+    """
+    Generic endpoint to calculate any vegetation index and return tile URL for visualization.
+    
+    Expected JSON payload:
+    {
+        "coordinates": [[lng, lat], [lng, lat], ...],
+        "start_date": "YYYY-MM-DD",
+        "end_date": "YYYY-MM-DD", 
+        "index_name": "NDVI" | "EVI" | "SAVI" | "ARVI" | "MAVI" | "SR"
+    }
+    """
+    try:
+        # ✅ Receive request data
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "No input data provided"}), 400
+
+        coordinates = data.get('coordinates')
+        start_date = data.get('start_date')
+        end_date = data.get('end_date')
+        index_name = data.get('index_name', 'NDVI')  # Default to NDVI
+
+        if not coordinates or not start_date or not end_date:
+            return jsonify({"error": "Missing required fields: coordinates, start_date, end_date"}), 400
+
+        if len(coordinates) < 3:
+            return jsonify({"error": "AOI must have at least three coordinates"}), 400
+
+        # ✅ Check if Earth Engine is available
+        if not EE_INITIALIZED:
+            return jsonify({"error": "Google Earth Engine is not initialized. Please check service account configuration."}), 503
+
+        # ✅ Create AOI Polygon
+        aoi = ee.Geometry.Polygon([coordinates])
+        print(f"✅ AOI Polygon for {index_name}:", aoi.getInfo())
+
+        # ✅ Load Sentinel-2 Surface Reflectance collection with all required bands
+        collection = (
+            ee.ImageCollection('COPERNICUS/S2_SR')
+            .filterBounds(aoi)
+            .filterDate(start_date, end_date)
+            .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 20))
+            .map(mask_clouds)
+            .map(lambda img: img.multiply(0.0001))  # Scale reflectance
+            .select(['B2', 'B4', 'B8', 'B11'])  # Blue, Red, NIR, SWIR
+        )
+
+        # ✅ If no images, return 404
+        if collection.size().getInfo() == 0:
+            return jsonify({"error": "No Sentinel-2 data available for the specified AOI and dates"}), 404
+
+        # ✅ Get median composite and calculate the selected vegetation index
+        median_image = collection.median()
+        
+        try:
+            index_image = calculate_vegetation_index(median_image, index_name)
+        except ValueError as ve:
+            return jsonify({"error": str(ve)}), 400
+
+        # ✅ Clip index to AOI to avoid entire bounding box
+        index_clipped = index_image.clip(aoi)
+
+        # ✅ Generate index tile URL with appropriate visualization parameters
+        vis_params = get_visualization_params(index_name)
+        map_dict = index_clipped.getMapId(vis_params)
+        tile_url = map_dict['tile_fetcher'].url_format
+        print(f"✅ {index_name} Tile URL:", tile_url)
+
+        response = {
+            "status": "success",
+            "index_name": index_name,
+            "start_date": start_date,
+            "end_date": end_date,
+            "coordinates": coordinates,
+            "tile_url": tile_url,
+            "visualization_params": vis_params
+        }
+        return jsonify(response), 200
+
+    except ee.EEException as e:
+        print("❌ Earth Engine Error:", str(e))
+        return jsonify({"error": f"Earth Engine Error: {str(e)}"}), 500
+    except Exception as e:
+        print("❌ Internal server error:", str(e))
+        return jsonify({"error": f"Internal server error: {str(e)}"}), 500
+
+@app.route('/api/indices/timeseries', methods=['POST'])
+def index_time_series():
+    """
+    Generic endpoint to calculate time series for any vegetation index.
+    
+    Expected JSON payload:
+    {
+        "coordinates": [[lng, lat], [lng, lat], ...],
+        "start_date": "YYYY-MM-DD",
+        "end_date": "YYYY-MM-DD",
+        "index_name": "NDVI" | "EVI" | "SAVI" | "ARVI" | "MAVI" | "SR"
+    }
+    """
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "No input data provided"}), 400
+
+        coordinates = data.get('coordinates')
+        start_date = data.get('start_date')
+        end_date = data.get('end_date')
+        index_name = data.get('index_name', 'NDVI')  # Default to NDVI
+
+        if not coordinates or not start_date or not end_date:
+            return jsonify({"error": "Missing required fields: coordinates, start_date, end_date"}), 400
+        if len(coordinates) < 3:
+            return jsonify({"error": "AOI must have at least three coordinates"}), 400
+
+        # ✅ Check if Earth Engine is available
+        if not EE_INITIALIZED:
+            return jsonify({"error": "Google Earth Engine is not initialized. Please check service account configuration."}), 503
+
+        # Create AOI and apply a small positive buffer
+        aoi = ee.Geometry.Polygon([coordinates])
+        buffered_geom = aoi.buffer(10)  # Small positive buffer
+        print(f"✅ Buffered AOI for {index_name}:", buffered_geom.getInfo())
+
+        # Load Sentinel-2 SR collection with all required bands
+        collection = (ee.ImageCollection('COPERNICUS/S2_SR')
+                      .filterBounds(buffered_geom)
+                      .filterDate(start_date, end_date)
+                      .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 20))
+                      .filter(ee.Filter.notNull(['system:time_start']))
+                      .map(mask_clouds)
+                      .select(['B2', 'B4', 'B8', 'B11'])  # Blue, Red, NIR, SWIR
+                     )
+        
+        # Scale images and preserve properties
+        def scale_image(image):
+            return image.multiply(0.0001).copyProperties(image, ['system:time_start', 'system:index'])
+        collection = collection.map(scale_image)
+
+        coll_size = collection.size().getInfo()
+        print(f"Collection size for {index_name}:", coll_size)
+        if coll_size == 0:
+            return jsonify({"error": "No Sentinel-2 data available for the specified AOI and dates"}), 404
+
+        # Compute the selected vegetation index for each image
+        def add_index(image):
+            try:
+                index_img = calculate_vegetation_index(image, index_name)
+                return image.addBands(index_img).copyProperties(image, ['system:time_start', 'system:index'])
+            except:
+                return image  # Skip if calculation fails
+        
+        index_collection = collection.map(add_index)
+
+        # Extract time series data
+        def extract_index_feature(image):
+            time_prop = image.get('system:time_start')
+            image_id = image.get('system:index')
+            formatted_date = ee.Algorithms.If(
+                ee.Algorithms.IsEqual(time_prop, None),
+                "null",
+                ee.Date(time_prop).format('YYYY-MM-dd')
+            )
+            
+            # Get the mean value for the selected index
+            index_dict = image.select(index_name).reduceRegion(
+                reducer=ee.Reducer.mean(),
+                geometry=buffered_geom,
+                scale=5,
+                bestEffort=True,
+                maxPixels=1e9
+            )
+            index_value = index_dict.get(index_name)
+            
+            return ee.Feature(None, {
+                'id': image_id,
+                'time_start': time_prop,
+                'date': formatted_date,
+                'index_name': index_name,
+                'value': index_value
+            })
+
+        # Map over the collection
+        features = index_collection.map(extract_index_feature, dropNulls=True)
+        features = ee.FeatureCollection(features)
+        
+        try:
+            features_info = features.getInfo()
+            print(f"Mapped features info for {index_name} retrieved successfully.")
+        except Exception as inner_error:
+            print(f"❌ Error calling getInfo on {index_name} features:", inner_error)
+            raise
+
+        # Build the time series list
+        time_series = []
+        for f in features_info.get('features', []):
+            props = f.get('properties', {})
+            if props.get('date') and props.get('value') is not None:
+                time_series.append({
+                    'date': props.get('date'),
+                    'value': props.get('value'),
+                    'index_name': index_name
+                })
+
+        response = {
+            "status": "success",
+            "index_name": index_name,
+            "time_series": time_series,
+            "total_measurements": len(time_series)
+        }
+        return jsonify(response), 200
+
+    except ee.EEException as e:
+        print("❌ Earth Engine Error:", str(e))
+        return jsonify({"error": f"Earth Engine Error: {str(e)}"}), 500
+    except Exception as e:
+        print("❌ Internal server error:", str(e))
+        return jsonify({"error": f"Internal server error: {str(e)}"}), 500
+
+@app.route('/api/indices/list', methods=['GET'])
+def list_indices():
+    """
+    Return a list of available vegetation indices with their descriptions.
+    """
+    indices = {
+        'NDVI': {
+            'name': 'Normalized Difference Vegetation Index',
+            'formula': '(NIR - Red) / (NIR + Red)',
+            'description': 'Most common vegetation index, good for general vegetation health assessment',
+            'range': [-1, 1],
+            'optimal_range': [0.4, 0.7]
+        },
+        'EVI': {
+            'name': 'Enhanced Vegetation Index', 
+            'formula': '2.5 * ((NIR - Red) / (NIR + 6*Red - 7.5*Blue + 1))',
+            'description': 'Improved version of NDVI with atmospheric correction and reduced soil noise',
+            'range': [-1, 1],
+            'optimal_range': [0.3, 0.8]
+        },
+        'SAVI': {
+            'name': 'Soil-Adjusted Vegetation Index',
+            'formula': '((NIR - Red) / (NIR + Red + 0.5)) * 1.5',
+            'description': 'Reduces soil brightness influence, good for sparse vegetation',
+            'range': [-1, 1],
+            'optimal_range': [0.2, 0.6]
+        },
+        'ARVI': {
+            'name': 'Atmospherically Resistant Vegetation Index',
+            'formula': '(NIR - (2*Red - Blue)) / (NIR + (2*Red - Blue))',
+            'description': 'Reduces atmospheric effects, especially aerosol scattering',
+            'range': [-1, 1],
+            'optimal_range': [0.3, 0.7]
+        },
+        'MAVI': {
+            'name': 'Moisture-Adjusted Vegetation Index',
+            'formula': '(NIR - Red) / (NIR + Red + SWIR)',
+            'description': 'Incorporates moisture information from SWIR band',
+            'range': [-1, 1],
+            'optimal_range': [0.2, 0.6]
+        },
+        'SR': {
+            'name': 'Simple Ratio',
+            'formula': 'NIR / Red', 
+            'description': 'Basic ratio of NIR to Red, simple but effective',
+            'range': [0, 10],
+            'optimal_range': [2, 8]
+        }
+    }
+    
+    return jsonify({
+        "status": "success",
+        "indices": indices,
+        "total_count": len(indices)
+    })
 
 @app.route('/', methods=['GET'])
 def health_check():

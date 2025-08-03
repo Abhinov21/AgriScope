@@ -68,6 +68,57 @@
   border-bottom: 2px solid #e0e6ed;
 }
 
+/* Index Selector Styles */
+.index-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.index-selector label {
+  font-weight: 600;
+  color: #555;
+  font-size: 0.9rem;
+}
+
+.index-dropdown {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #e0e6ed;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.index-dropdown:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.index-description {
+  background: #f8f9fa;
+  padding: 0.75rem;
+  border-radius: 6px;
+  border-left: 4px solid #667eea;
+}
+
+.description-text {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.85rem;
+  color: #666;
+  line-height: 1.4;
+}
+
+.range-text {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #888;
+  font-weight: 600;
+}
+
 /* Action Buttons */
 .action-btn {
   width: 100%;
