@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter as Router, Route, Routes, useLocation, Navigate } from "react-router-dom";
+import { HashRouter as Router, Route, Routes, useLocation, Navigate } from "react-router-dom";
 import Navbar from "./pages/Navbar"; 
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -29,6 +29,8 @@ const Layout = () => {
         <Route path="/requirements" element={<RequirementsForm />} />
         <Route path="/field-reports" element={<FieldReports />} />
         <Route path="/crop-suggestion" element={<CropSuggestion />}/>
+        {/* Catch-all route for 404 pages */}
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </>
   );
@@ -36,7 +38,7 @@ const Layout = () => {
 
 function App() {
   return (
-    <Router>
+    <Router basename={process.env.PUBLIC_URL || ''}>
       <Layout />
     </Router>
   );

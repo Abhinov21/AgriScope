@@ -1,1 +1,12 @@
+# Redirect all routes to index.html for React Router
 /*    /index.html   200
+
+# Handle specific routes
+/login    /index.html   200
+/register    /index.html   200
+/homepage    /index.html   200
+/monitor-field    /index.html   200
+/requirements    /index.html   200
+/field-reports    /index.html   200
+/crop-suggestion    /index.html   200
+/AboutUs    /index.html   200
