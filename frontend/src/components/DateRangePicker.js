@@ -7,14 +7,30 @@ const DateRangePicker = ({ startDate, endDate, onStartChange, onEndChange }) => 
   
   // Format date to YYYY-MM-DD for input fields
   const formatDateForInput = (date) => {
-    return date.toISOString().split("T")[0];
+    try {
+      if (!date || isNaN(date.getTime())) {
+        return '';
+      }
+      return date.toISOString().split("T")[0];
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return '';
+    }
   };
   
   // Calculate date difference in days
   const calculateDateDifference = () => {
-    const diffTime = Math.abs(endDate - startDate);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
+    try {
+      if (!startDate || !endDate || isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        return 0;
+      }
+      const diffTime = Math.abs(endDate - startDate);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      return diffDays;
+    } catch (error) {
+      console.error('Error calculating date difference:', error);
+      return 0;
+    }
   };
   
   // Apply quick range presets - adjusted to exclude last 5 days
@@ -78,10 +94,18 @@ const DateRangePicker = ({ startDate, endDate, onStartChange, onEndChange }) => 
   
   // Warn if selected end date is too recent
   const isEndDateTooRecent = () => {
-    const today = new Date();
-    const fiveDaysAgo = new Date(today);
-    fiveDaysAgo.setDate(today.getDate() - 5);
-    return endDate > fiveDaysAgo;
+    try {
+      if (!endDate || isNaN(endDate.getTime())) {
+        return false;
+      }
+      const today = new Date();
+      const fiveDaysAgo = new Date(today);
+      fiveDaysAgo.setDate(today.getDate() - 5);
+      return endDate > fiveDaysAgo;
+    } catch (error) {
+      console.error('Error checking date validity:', error);
+      return false;
+    }
   };
   
   return (
@@ -96,7 +120,15 @@ const DateRangePicker = ({ startDate, endDate, onStartChange, onEndChange }) => 
             type="date"
             className="date-input"
             value={formatDateForInput(startDate)}
-            onChange={(e) => onStartChange(new Date(e.target.value))}
+            onChange={(e) => {
+              const dateValue = e.target.value;
+              if (dateValue) {
+                const newDate = new Date(dateValue + 'T00:00:00');
+                if (!isNaN(newDate.getTime())) {
+                  onStartChange(newDate);
+                }
+              }
+            }}
             max={formatDateForInput(endDate)}
           />
         </div>
@@ -108,7 +140,15 @@ const DateRangePicker = ({ startDate, endDate, onStartChange, onEndChange }) => 
             type="date"
             className="date-input"
             value={formatDateForInput(endDate)}
-            onChange={(e) => onEndChange(new Date(e.target.value))}
+            onChange={(e) => {
+              const dateValue = e.target.value;
+              if (dateValue) {
+                const newDate = new Date(dateValue + 'T00:00:00');
+                if (!isNaN(newDate.getTime())) {
+                  onEndChange(newDate);
+                }
+              }
+            }}
             min={formatDateForInput(startDate)}
           />
         </div>
