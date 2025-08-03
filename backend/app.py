@@ -686,23 +686,6 @@ def list_indices():
         "total_count": len(indices)
     })
 
-@app.route('/', methods=['GET'])
-def health_check():
-    return jsonify({
-        "status": "healthy",
-        "service": "AgriScope Flask Backend",
-        "earth_engine_status": "initialized" if EE_INITIALIZED else "not_available",
-        "message": "AgriScope backend is running successfully!"
-    })
-
-@app.route('/health', methods=['GET'])
-def health():
-    return jsonify({
-        "status": "healthy",
-        "earth_engine": EE_INITIALIZED,
-        "timestamp": time.time()
-    })
-
 @app.route('/debug/auth', methods=['GET'])
 def debug_auth():
     """Debug endpoint to check authentication status"""
