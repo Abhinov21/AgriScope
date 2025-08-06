@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { getFlaskApiUrl } from '../config/api';
 import '../styles/CropSuggestion.css';
 
 const CropSuggestion = () => {
@@ -33,7 +34,7 @@ const CropSuggestion = () => {
         setRecommendations(null);
 
         try {
-            const response = await axios.post('http://localhost:5000/api/crop-recommendations', {
+            const response = await axios.post(`${getFlaskApiUrl()}/api/crop-recommendations`, {
                 field_data: formData,
                 weather_data: null,
                 vegetation_data: null

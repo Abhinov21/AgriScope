@@ -1,45 +1,375 @@
-/* src/components/AboutUs.css */
+/* src/styles/Aboutus.css */
 
-.about-section {
-    max-width: 900px;
-    margin: 50px auto;
-    padding: 40px;
-    background-color: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    color: #333;
+.about-page {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
+  line-height: 1.6;
+}
+
+/* Hero Section */
+.about-hero {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  text-align: center;
+  padding: 100px 20px 80px;
+  margin-bottom: 0;
+}
+
+.about-hero h1 {
+  font-size: 3.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.about-hero p {
+  font-size: 1.3rem;
+  opacity: 0.9;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Project Description */
+.project-description {
+  background: #f8f9fa;
+  padding: 80px 20px;
+}
+
+.description-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.description-content h2 {
+  font-size: 2.5rem;
+  color: #2c3e50;
+  margin-bottom: 2rem;
+}
+
+.description-content p {
+  font-size: 1.2rem;
+  max-width: 800px;
+  margin: 0 auto 3rem;
+  color: #555;
+}
+
+.highlight {
+  color: #667eea;
+  font-weight: 600;
+}
+
+/* Features Grid */
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem;
+  margin-top: 3rem;
+}
+
+.feature {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.feature:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+.feature h3 {
+  font-size: 1.3rem;
+  color: #2c3e50;
+  margin-bottom: 1rem;
+}
+
+.feature p {
+  color: #666;
+  margin: 0;
+}
+
+/* Team Section */
+.team-section {
+  padding: 80px 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.team-section h2 {
+  text-align: center;
+  font-size: 2.5rem;
+  color: #2c3e50;
+  margin-bottom: 1rem;
+}
+
+.team-intro {
+  text-align: center;
+  font-size: 1.2rem;
+  color: #666;
+  max-width: 600px;
+  margin: 0 auto 3rem;
+}
+
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 2rem;
+  margin-top: 3rem;
+}
+
+.team-card {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid #e9ecef;
+}
+
+.team-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+.team-card-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.member-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.2rem;
+  margin-right: 1rem;
+}
+
+.member-info h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.3rem;
+  color: #2c3e50;
+}
+
+.member-role {
+  color: #667eea;
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.member-description {
+  margin-bottom: 1.5rem;
+}
+
+.member-description p {
+  color: #555;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.member-skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.skill-tag {
+  background: #f1f3f4;
+  color: #5f6368;
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.member-links a {
+  color: #667eea;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.3s ease;
+}
+
+.member-links a:hover {
+  color: #764ba2;
+  text-decoration: underline;
+}
+
+/* Mentor Section */
+.mentor-section {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 80px 20px;
+}
+
+.mentor-content {
+  max-width: 800px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.mentor-content h2 {
+  font-size: 2.5rem;
+  margin-bottom: 2rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.mentor-card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 3rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.mentor-info h3 {
+  font-size: 1.8rem;
+  margin-bottom: 1.5rem;
+  color: #fff;
+}
+
+.mentor-info p {
+  font-size: 1.1rem;
+  line-height: 1.7;
+  margin-bottom: 1.5rem;
+  opacity: 0.9;
+}
+
+.mentor-quote {
+  font-style: italic;
+  font-size: 1.2rem !important;
+  opacity: 1 !important;
+  border-left: 4px solid rgba(255, 255, 255, 0.5);
+  padding-left: 1.5rem;
+  margin: 2rem 0 0 0 !important;
+}
+
+/* Tech Section */
+.tech-section {
+  padding: 80px 20px;
+  background: #f8f9fa;
+}
+
+.tech-section h2 {
+  text-align: center;
+  font-size: 2.5rem;
+  color: #2c3e50;
+  margin-bottom: 3rem;
+}
+
+.tech-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.tech-category {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  text-align: center;
+}
+
+.tech-category h4 {
+  font-size: 1.3rem;
+  color: #2c3e50;
+  margin-bottom: 1.5rem;
+}
+
+.tech-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.tech-tags span {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .about-hero h1 {
+    font-size: 2.5rem;
   }
   
-  .about-section h1 {
-    color: #2c3e50;
-    margin-bottom: 20px;
+  .about-hero p {
+    font-size: 1.1rem;
+  }
+  
+  .description-content h2,
+  .team-section h2,
+  .mentor-content h2,
+  .tech-section h2 {
     font-size: 2rem;
   }
   
-  .about-section p {
-    line-height: 1.8;
-    font-size: 1.1rem;
-    margin-bottom: 20px;
+  .features-grid,
+  .team-grid,
+  .tech-grid {
+    grid-template-columns: 1fr;
   }
   
-  .highlight {
-    color: #27ae60;
-    font-weight: 600;
+  .team-card {
+    padding: 1.5rem;
   }
   
-  @media (max-width: 768px) {
-    .about-section {
-      padding: 20px;
-      margin: 20px;
-    }
-  
-    .about-section h1 {
-      font-size: 1.5rem;
-    }
-  
-    .about-section p {
-      font-size: 1rem;
-    }
+  .mentor-card {
+    padding: 2rem;
   }
   
+  .about-hero {
+    padding: 60px 20px 50px;
+  }
+  
+  .project-description,
+  .team-section,
+  .mentor-section,
+  .tech-section {
+    padding: 60px 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .about-hero h1 {
+    font-size: 2rem;
+  }
+  
+  .team-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .team-card-header {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .member-avatar {
+    margin-right: 0;
+    margin-bottom: 1rem;
+  }
+  
+  .mentor-quote {
+    font-size: 1rem !important;
+    padding-left: 1rem;
+  }
+}
