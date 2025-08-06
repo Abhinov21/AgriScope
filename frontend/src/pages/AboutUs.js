@@ -122,7 +122,7 @@ const AboutUs = () => {
           <h2>Special Thanks</h2>
           <div className="mentor-card">
             <div className="mentor-info">
-              <h3>🎓 Our Mentor</h3>
+              <h3>🎓 Prof. Akshay Pandey Sir</h3>
               <p>
                 We extend our heartfelt gratitude to our mentor for providing invaluable guidance, technical expertise, 
                 and unwavering support throughout this project. Their mentorship has been instrumental in shaping 
