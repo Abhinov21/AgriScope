@@ -4,38 +4,59 @@ const dns = require("dns");
 // Force IPv4 to avoid IPv6 issues on Render
 dns.setDefaultResultOrder('ipv4first');
 
-// Create PostgreSQL connection pool
+console.log("📊 Database Configuration:");
+console.log("DATABASE_URL set:", process.env.DATABASE_URL ? "✓ Yes" : "✗ No");
+console.log("NODE_ENV:", process.env.NODE_ENV);
+
+// Create PostgreSQL connection pool with minimal config
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
-    rejectUnauthorized: false,
-    sslmode: 'require'
+    rejectUnauthorized: false
   },
-  max: 20,
+  // Conservative pooling settings
+  max: 5,
+  min: 1,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 5000,
-  statement_timeout: 30000,
-  query_timeout: 30000,
+  connectionTimeoutMillis: 10000,
 });
 
-// Test connection
-pool.connect((err, client, release) => {
-  if (err) {
-    console.error("❌ Database connection failed:", err.message);
-    console.error("Error Code:", err.code);
-    console.error("Error Address:", err.address);
-    console.error("Error Port:", err.port);
-    console.error("DATABASE_URL set:", process.env.DATABASE_URL ? "✓ Yes" : "✗ No");
-    if (err.code === 'ENETUNREACH') {
-      console.error("⚠️  IPv6 address detected - retrying with sslmode=require");
-    }
-    return;
-  }
-  console.log("✅ Connected to PostgreSQL");
-  release();
-  // Create tables after successful connection
-  createTables();
+// Better error handling on pool level
+pool.on('error', (err) => {
+  console.error('❌ Unexpected error on idle client', err);
 });
+
+// Test connection with retry logic
+let connectionAttempts = 0;
+const maxRetries = 3;
+
+function testConnection() {
+  connectionAttempts++;
+  console.log(`\n🔄 Connection attempt ${connectionAttempts}/${maxRetries}...`);
+  
+  pool.connect((err, client, release) => {
+    if (err) {
+      console.error("❌ Database connection failed:", err.message);
+      console.error("Error Code:", err.code);
+      console.error("Error Address:", err.address);
+      
+      if (connectionAttempts < maxRetries) {
+        console.log(`⏳ Retrying in 3 seconds...`);
+        setTimeout(testConnection, 3000);
+      } else {
+        console.error("❌ Max connection attempts reached");
+      }
+      return;
+    }
+    
+    console.log("✅ Connected to PostgreSQL!");
+    release();
+    createTables();
+  });
+}
+
+// Start testing connection after a short delay
+setTimeout(testConnection, 1000);
 
 // Create Users Table (PostgreSQL syntax)
 const createUserTable = `CREATE TABLE IF NOT EXISTS users (
