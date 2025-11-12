@@ -1,23 +1,40 @@
 const { Pool } = require("pg");
+const dns = require("dns");
+
+// Force IPv4 to avoid IPv6 issues on Render
+dns.setDefaultResultOrder('ipv4first');
 
 // Create PostgreSQL connection pool
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-  max: 10,
+  ssl: {
+    rejectUnauthorized: false,
+    sslmode: 'require'
+  },
+  max: 20,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+  connectionTimeoutMillis: 5000,
+  statement_timeout: 30000,
+  query_timeout: 30000,
 });
 
 // Test connection
 pool.connect((err, client, release) => {
   if (err) {
     console.error("❌ Database connection failed:", err.message);
-    console.error("DATABASE_URL:", process.env.DATABASE_URL ? "✓ Set" : "✗ Not set");
+    console.error("Error Code:", err.code);
+    console.error("Error Address:", err.address);
+    console.error("Error Port:", err.port);
+    console.error("DATABASE_URL set:", process.env.DATABASE_URL ? "✓ Yes" : "✗ No");
+    if (err.code === 'ENETUNREACH') {
+      console.error("⚠️  IPv6 address detected - retrying with sslmode=require");
+    }
     return;
   }
   console.log("✅ Connected to PostgreSQL");
   release();
+  // Create tables after successful connection
+  createTables();
 });
 
 // Create Users Table (PostgreSQL syntax)
@@ -54,7 +71,6 @@ async function createTables() {
   }
 }
 
-// Initialize tables
-createTables();
+// Note: createTables() is now called only after successful connection in pool.connect()
 
 module.exports = pool;
