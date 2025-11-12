@@ -34,7 +34,10 @@ router.post("/register", async (req, res) => {
     if (error.code === "23505") { // PostgreSQL unique violation
       return res.status(400).json({ message: "User already exists" });
     }
-    res.status(500).json({ message: "Internal server error" });
+    if (error.code === "ECONNREFUSED" || error.code === "ENOTFOUND") {
+      return res.status(503).json({ message: "Database connection failed. Please try again later." });
+    }
+    res.status(500).json({ message: "Internal server error", error: error.message });
   }
 });
 
@@ -71,7 +74,10 @@ router.post("/login", async (req, res) => {
     });
   } catch (error) {
     console.error("Login error:", error);
-    res.status(500).json({ message: "Internal server error" });
+    if (error.code === "ECONNREFUSED" || error.code === "ENOTFOUND") {
+      return res.status(503).json({ message: "Database connection failed. Please try again later." });
+    }
+    res.status(500).json({ message: "Internal server error", error: error.message });
   }
 });
 

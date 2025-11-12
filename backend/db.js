@@ -2,17 +2,21 @@ const { Pool } = require("pg");
 
 // Create PostgreSQL connection pool
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || `postgresql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`,
-  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  max: 10,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
 });
 
 // Test connection
 pool.connect((err, client, release) => {
   if (err) {
-    console.error("Database connection failed:", err);
+    console.error("❌ Database connection failed:", err.message);
+    console.error("DATABASE_URL:", process.env.DATABASE_URL ? "✓ Set" : "✗ Not set");
     return;
   }
-  console.log("Connected to PostgreSQL");
+  console.log("✅ Connected to PostgreSQL");
   release();
 });
 
