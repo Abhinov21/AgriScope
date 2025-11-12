@@ -30,7 +30,6 @@ const Navbar = () => {
       <div className="logo">AgriScope</div>
       <ul className="nav-links">
         <li><Link to="/homepage">Home</Link></li>
-        <li><Link to="/features">Features</Link></li>
         <li><Link to="/AboutUs">About</Link></li>
         <React.Fragment>
           <li><Link to="/monitor-field">Monitor Field</Link></li>

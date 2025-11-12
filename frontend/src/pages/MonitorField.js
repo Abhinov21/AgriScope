@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { MapContainer, TileLayer, Polygon, useMap } from "react-leaflet";
 import L from "leaflet"; // Import Leaflet for bounds calculation
 import MapWithDraw from "../components/MapWithDraw";
+import LocationSearch from "../components/LocationSearch";
 import NDVITileLayer from "../components/NDVITileLayer";
 import axios from "axios";
 import FieldList from "../components/FieldList";
@@ -801,6 +802,8 @@ const MonitorField = () => {
   attribution='&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
 />
 
+            {/* Location Search Component */}
+            <LocationSearch />
             
             {/* Drawing controls */}
             <MapWithDraw 
