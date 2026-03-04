@@ -8,7 +8,6 @@ console.log("NODE_ENV:", process.env.NODE_ENV);
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false },
-  family: 4, // force IPv4 to avoid ENETUNREACH errors
   max: 5,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 15000
