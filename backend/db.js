@@ -1,14 +1,11 @@
 const { Pool } = require("pg");
-const dns = require("dns");
-
-// Force IPv4 to avoid IPv6 issues on Render
-dns.setDefaultResultOrder('ipv4first');
 
 console.log("📊 Database Configuration:");
 console.log("DATABASE_URL set:", process.env.DATABASE_URL ? "✓ Yes" : "✗ No");
 console.log("NODE_ENV:", process.env.NODE_ENV);
 
 // Create PostgreSQL connection pool with minimal config
+// Using connection string with proper SSL configuration for Supabase pooler
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
@@ -19,7 +16,7 @@ const pool = new Pool({
   max: 5,
   min: 1,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 10000,
+  connectionTimeoutMillis: 15000,
 });
 
 // Better error handling on pool level
