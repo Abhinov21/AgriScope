@@ -12,13 +12,15 @@ console.log("NODE_ENV:", process.env.NODE_ENV);
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
-    rejectUnauthorized: false
+    rejectUnauthorized: false,
+    checkServerIdentity: false
   },
   // Conservative pooling settings
   max: 5,
   min: 1,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 10000,
+  family: 4, // Force IPv4 only - critical for Render compatibility
 });
 
 // Better error handling on pool level
