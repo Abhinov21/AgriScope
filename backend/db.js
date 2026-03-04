@@ -4,9 +4,13 @@ console.log("📊 Database Configuration:");
 console.log("DATABASE_URL set:", process.env.DATABASE_URL ? "✓ Yes" : "✗ No");
 console.log("NODE_ENV:", process.env.NODE_ENV);
 
-// PostgreSQL connection pool
+// PostgreSQL connection pool with explicit configuration
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  host: "aws-1-ap-southeast-2.pooler.supabase.com",
+  port: 6543,
+  user: "postgres.dssxdmyyaswfkwybsgtv",
+  password: "6ZLqHeBRaCPgU4EU",
+  database: "postgres",
   ssl: { rejectUnauthorized: false },
   max: 5,
   idleTimeoutMillis: 30000,
