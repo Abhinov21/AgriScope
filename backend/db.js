@@ -5,13 +5,10 @@ console.log("DATABASE_URL set:", process.env.DATABASE_URL ? "✓ Yes" : "✗ No"
 console.log("NODE_ENV:", process.env.NODE_ENV);
 
 // Create PostgreSQL connection pool with minimal config
-// Using connection string with proper SSL configuration for Supabase pooler
+// Testing with direct connection first (no pooler issues)
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false,
-    checkServerIdentity: false
-  },
+  ssl: true,
   // Conservative pooling settings
   max: 5,
   min: 1,
