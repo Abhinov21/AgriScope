@@ -8,7 +8,9 @@ console.log("NODE_ENV:", process.env.NODE_ENV);
 // Testing with direct connection first (no pooler issues)
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: true,
+  ssl: {
+    rejectUnauthorized: false,
+  },
   // Conservative pooling settings
   max: 5,
   min: 1,
