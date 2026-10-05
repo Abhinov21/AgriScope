@@ -204,73 +204,6 @@ Respond ONLY with the JSON structure above, no additional text.
 """
 
     return prompt
-- NDVI Score: {vegetation_data.get('ndvi', 'N/A')} (Vegetation health indicator)
-- Soil Health: {vegetation_data.get('soil_health', 'Average')}
-- Previous Crop Performance: {vegetation_data.get('prev_performance', 'Unknown')}
-
-"""
-
-    prompt += """
-REQUIREMENTS:
-Please provide crop recommendations in the following JSON format. Give exactly 3 crop recommendations, prioritized by suitability:
-
-{
-    "primary_crop": {
-        "name": "Crop name",
-        "variety": "Specific variety if applicable",
-        "suitability_score": 95,
-        "planting_season": "Best time to plant",
-        "harvest_time": "Expected harvest period",
-        "expected_yield": "Expected yield per hectare",
-        "market_price": "Current market price range",
-        "water_requirement": "Water needs (Low/Medium/High)",
-        "investment_cost": "Estimated cost per hectare",
-        "profit_potential": "Expected profit margins",
-        "growing_tips": [
-            "Specific tip 1",
-            "Specific tip 2",
-            "Specific tip 3"
-        ],
-        "challenges": [
-            "Potential challenge 1",
-            "Potential challenge 2"
-        ],
-        "market_demand": "High/Medium/Low with explanation"
-    },
-    "secondary_crop": {
-        // Same structure as primary_crop
-    },
-    "alternative_crop": {
-        // Same structure as primary_crop
-    },
-    "general_advice": {
-        "soil_preparation": "Specific soil prep advice",
-        "fertilizer_plan": "NPK and organic fertilizer recommendations",
-        "pest_management": "Common pests and prevention",
-        "irrigation_schedule": "Optimal watering schedule",
-        "companion_crops": ["Crops that grow well together"],
-        "crop_rotation": "Future crop rotation suggestions"
-    },
-    "seasonal_calendar": {
-        "pre_monsoon": "Activities before monsoon",
-        "monsoon": "Monsoon season activities", 
-        "post_monsoon": "Post-monsoon activities",
-        "winter": "Winter season activities"
-    }
-}
-
-Focus on:
-1. Crops suitable for the current season and location
-2. Economic viability and market demand
-3. Water availability and irrigation requirements
-4. Farmer's experience level and budget
-5. Sustainable farming practices
-6. Local climate patterns and soil conditions
-
-Provide practical, implementable advice that considers Indian agricultural practices, government schemes, and local market conditions.
-"""
-
-    return prompt
 
 def parse_ai_response(ai_text):
     """Parse the AI response and extract the new descriptive format"""
@@ -387,3 +320,6 @@ def get_fallback_recommendations():
         },
         "note": "For AI-powered, personalized recommendations, please configure the GEMINI_API_KEY in your environment variables."
     }
+
+    
+    

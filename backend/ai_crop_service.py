@@ -45,7 +45,7 @@ def generate_ai_crop_recommendations(field_data, weather_data=None, vegetation_d
         prompt = build_crop_recommendation_prompt(field_data, weather_data, vegetation_data)
         
         # Generate response from Gemini
-        response = model.generate_content(prompt)
+        response = model.generate_content(prompt, request_options={"timeout": 90})
         
         # Parse AI response
         ai_recommendations = parse_ai_response(response.text)
