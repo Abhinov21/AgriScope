@@ -34,23 +34,38 @@ const CropSuggestion = () => {
         setRecommendations(null);
 
         try {
-            const response = await axios.post(`${getFlaskApiUrl()}/api/crop-recommendations`, {
-                field_data: formData,
-                weather_data: null,
-                vegetation_data: null
-            });
+            const response = await axios.post(
+                `${getFlaskApiUrl()}/api/crop-recommendations`,
+                {
+                    field_data: formData,
+                    weather_data: null,
+                    vegetation_data: null
+                },
+                { timeout: 50000 }
+            );
 
             if (response.data.status === 'success') {
                 setRecommendations(response.data.recommendations);
-            } else if (response.data.fallback) {
-                setRecommendations(response.data);
+            } else if (response.data.status === 'fallback' && response.data.recommendations) {
+                setRecommendations(response.data.recommendations);
                 setError('AI service not available. Showing fallback recommendations.');
             } else {
                 setError(response.data.error || 'Failed to get recommendations');
             }
         } catch (err) {
             console.error('Error getting AI recommendations:', err);
-            setError('Failed to connect to recommendation service. Please check if the backend server is running.');
+            const responseData = err.response?.data;
+
+            if (responseData?.status === 'fallback' && responseData.recommendations) {
+                setRecommendations(responseData.recommendations);
+                setError('AI service is temporarily unavailable. Showing fallback recommendations.');
+            } else if (err.code === 'ECONNABORTED') {
+                setError('The recommendation service timed out. Please try again.');
+            } else if (err.response?.status >= 500) {
+                setError('The recommendation service is temporarily unavailable. Please try again.');
+            } else {
+                setError('Could not reach the recommendation service. Please check your connection.');
+            }
         } finally {
             setLoading(false);
         }
@@ -69,7 +84,7 @@ const CropSuggestion = () => {
                     {Object.entries(data).map(([key, value]) => (
                         <div key={key} className="analysis-item">
                             <strong>{key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}:</strong>
-                            <p>{value}</p>
+                            <p>{typeof value === 'object' ? JSON.stringify(value) : value}</p>
                         </div>
                     ))}
                 </div>

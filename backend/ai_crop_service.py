@@ -1,326 +1,201 @@
-import os
 import json
-import google.generativeai as genai
+import logging
+import os
+import re
 from datetime import datetime
-from flask import jsonify
-from dotenv import load_dotenv
 
-# Load environment variables from .env file
+from dotenv import load_dotenv
+from google import genai
+from google.genai import types
+
 load_dotenv()
 
-# Configure Gemini AI
-GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
+logger = logging.getLogger(__name__)
+
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
+GEMINI_TIMEOUT_MS = 30_000
+
+RECOMMENDATION_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "land_analysis": {"type": "object"},
+        "season_analysis": {"type": "object"},
+        "market_insights": {"type": "object"},
+        "recommended_crops": {"type": "array"},
+        "action_plan": {"type": "object"},
+        "sustainability_advice": {"type": "object"},
+    },
+    "required": [
+        "land_analysis",
+        "season_analysis",
+        "market_insights",
+        "recommended_crops",
+        "action_plan",
+        "sustainability_advice",
+    ],
+}
+
+client = None
 if GEMINI_API_KEY:
-    print("✅ GEMINI_API_KEY FOUND", flush=True)
+    client = genai.Client(
+        api_key=GEMINI_API_KEY,
+        http_options=types.HttpOptions(timeout=GEMINI_TIMEOUT_MS),
+    )
 
-    genai.configure(api_key=GEMINI_API_KEY)
-
-    model = genai.GenerativeModel('gemini-3.8-flash')
-
-else:
-    print("❌ GEMINI_API_KEY NOT FOUND", flush=True)
-    model = None
 
 def generate_ai_crop_recommendations(field_data, weather_data=None, vegetation_data=None):
-    """
-    Generate AI-powered crop recommendations using Gemini AI
-    
-    Args:
-        field_data: Dictionary containing field information (location, soil, size, etc.)
-        weather_data: Optional weather data for the field
-        vegetation_data: Optional vegetation index data (NDVI, etc.)
-    
-    Returns:
-        Dictionary with AI-generated crop recommendations
-    """
-    
-    if not model:
-        return {
-            "error": "AI service not available. Please configure GEMINI_API_KEY.",
-            "fallback": True
-        }
-    
+    """Generate recommendations using Gemini or raise when the AI service fails."""
+    if client is None:
+        raise RuntimeError("Gemini client is not configured")
+
+    prompt = build_crop_recommendation_prompt(
+        field_data, weather_data, vegetation_data
+    )
+
     try:
-        # Build comprehensive prompt for AI
-        prompt = build_crop_recommendation_prompt(field_data, weather_data, vegetation_data)
-        
-        # Generate response from Gemini
-        response = model.generate_content(prompt, request_options={"timeout": 90})
-        
-        # Parse AI response
-        ai_recommendations = parse_ai_response(response.text)
-        
-        return {
-            "status": "success",
-            "ai_generated": True,
-            "recommendations": ai_recommendations,
-            "generated_at": datetime.now().isoformat(),
-            "field_location": field_data.get('location', 'Unknown')
-        }
-        
-    except Exception as e:
-        print(f"Error generating AI recommendations: {e}")
-        return {
-            "error": f"AI recommendation failed: {str(e)}",
-            "fallback": True
-        }
+        response = client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                response_schema=RECOMMENDATION_SCHEMA,
+                temperature=0.2,
+                max_output_tokens=2048,
+            ),
+        )
+        recommendations = parse_ai_response(response.text)
+    except Exception as exc:
+        logger.error("Gemini recommendation request failed: %s", type(exc).__name__)
+        raise RuntimeError("Gemini recommendation request failed") from exc
 
-def build_crop_recommendation_prompt(field_data, weather_data, vegetation_data):
-    """Build a comprehensive prompt for intelligent, descriptive crop recommendations"""
-    
-    current_month = datetime.now().strftime("%B")
-    current_year = datetime.now().year
-    
-    # Determine current season for India
-    month_num = datetime.now().month
-    if month_num in [3, 4, 5]:
-        season = "Summer (Zaid season)"
-        season_context = "Hot and dry season requiring heat-tolerant crops with efficient irrigation"
-    elif month_num in [6, 7, 8, 9]:
-        season = "Monsoon (Kharif season)" 
-        season_context = "Rainy season ideal for major food grains, rice, sugarcane, and cotton"
-    elif month_num in [10, 11, 12, 1, 2]:
-        season = "Winter (Rabi season)"
-        season_context = "Cool and dry season perfect for wheat, mustard, gram, and cash crops"
-    else:
-        season = "Transition period"
-        season_context = "Season transition - plan for upcoming season requirements"
-
-    prompt = f"""
-You are an expert agricultural consultant with deep knowledge of Indian farming, market trends, and sustainable agriculture. 
-Analyze the given field conditions and provide comprehensive, descriptive crop recommendations.
-
-CURRENT CONTEXT:
-- Date: {current_month} {current_year}
-- Season: {season}
-- Season Context: {season_context}
-
-FIELD ANALYSIS REQUEST:
-Location: {field_data.get('location', 'India')}
-Field Size: {field_data.get('area', 'Not specified')} hectares
-Soil Type: {field_data.get('soil_type', 'Not specified')}
-Soil pH: {field_data.get('soil_ph', 'Not tested')}
-Irrigation Available: {field_data.get('irrigation', 'Not specified')}
-Farmer Experience: {field_data.get('experience', 'Not specified')}
-Budget Range: {field_data.get('budget', 'Not specified')}
-"""
-
-    # Add weather data if available
-    if weather_data:
-        prompt += f"""
-CURRENT WEATHER CONDITIONS:
-Average Temperature: {weather_data.get('avg_temp', 'N/A')}°C
-Expected Rainfall: {weather_data.get('rainfall', 'N/A')}mm
-Humidity Levels: {weather_data.get('humidity', 'N/A')}%
-Weather Pattern: {weather_data.get('pattern', 'Normal conditions expected')}
-"""
-
-    # Add vegetation data if available
-    if vegetation_data:
-        prompt += f"""
-FIELD HEALTH INDICATORS:
-NDVI Value: {vegetation_data.get('ndvi', 'Not available')}
-Vegetation Health: {vegetation_data.get('health_status', 'Not assessed')}
-Soil Moisture: {vegetation_data.get('soil_moisture', 'Not measured')}
-"""
-
-    prompt += f"""
-
-PROVIDE A COMPREHENSIVE ANALYSIS IN THIS EXACT JSON FORMAT:
-{{
-    "land_analysis": {{
-        "soil_assessment": "Detailed analysis of the soil type, pH, and suitability for different crops",
-        "water_requirements": "Assessment of irrigation needs and water management strategies",
-        "field_condition": "Overall field health and readiness for cultivation",
-        "challenges": "Potential challenges based on current conditions",
-        "opportunities": "Strengths and advantages of this field"
-    }},
-    "season_analysis": {{
-        "current_season_suitability": "How well the current season suits farming activities",
-        "optimal_planting_window": "Best time to plant recommended crops",
-        "weather_considerations": "Important weather factors to consider"
-    }},
-    "market_insights": {{
-        "current_trends": "Current market trends for agricultural products",
-        "profitable_categories": "Which crop categories are showing good market demand",
-        "price_outlook": "Expected price trends for recommended crops",
-        "market_timing": "Best time to harvest and sell for maximum profit"
-    }},
-    "recommended_crops": [
-        {{
-            "name": "Primary Crop Recommendation",
-            "variety": "Specific variety or hybrid recommended",
-            "why_suitable": "Detailed explanation of why this crop is perfect for your field",
-            "market_potential": "Current market demand and profit potential",
-            "investment_needed": "Estimated investment required",
-            "expected_returns": "Projected returns and profit margins",
-            "growing_tips": "Key cultivation practices for success",
-            "harvest_timeline": "When to plant and when to harvest",
-            "risk_factors": "Potential risks and mitigation strategies"
-        }},
-        {{
-            "name": "Secondary Crop Recommendation", 
-            "variety": "Alternative variety option",
-            "why_suitable": "Why this is a good backup option",
-            "market_potential": "Market prospects for this crop",
-            "investment_needed": "Budget requirements",
-            "expected_returns": "Profit potential",
-            "growing_tips": "Important cultivation notes",
-            "harvest_timeline": "Planting and harvest schedule",
-            "risk_factors": "Associated risks"
-        }},
-        {{
-            "name": "Alternative/Mixed Crop Option",
-            "variety": "Third option or intercropping suggestion",
-            "why_suitable": "Benefits of this alternative approach",
-            "market_potential": "Market viability",
-            "investment_needed": "Financial requirements",
-            "expected_returns": "Expected profitability",
-            "growing_tips": "Special considerations",
-            "harvest_timeline": "Timeline details",
-            "risk_factors": "Risk assessment"
-        }}
-    ],
-    "action_plan": {{
-        "immediate_steps": "What to do right now to prepare for planting",
-        "soil_preparation": "Specific soil preparation recommendations",
-        "input_procurement": "Seeds, fertilizers, and other inputs to arrange",
-        "timeline": "Week-by-week action plan for the next 2 months",
-        "success_indicators": "How to measure if you're on track for good yields"
-    }},
-    "sustainability_advice": {{
-        "organic_options": "Organic farming possibilities for these crops",
-        "water_conservation": "Water-saving techniques applicable",
-        "soil_health": "Long-term soil health maintenance",
-        "crop_rotation": "Future crop rotation suggestions"
-    }}
-}}
-
-IMPORTANT: 
-- Focus on REAL, CURRENT market conditions and profitable crops for {current_month} {current_year}
-- Provide specific, actionable advice tailored to the given field conditions
-- Consider the farmer's experience level and budget constraints
-- Include region-specific varieties and techniques
-- Make recommendations that maximize profitability while being practical
-- Ensure all advice is scientifically sound and market-relevant
-
-Respond ONLY with the JSON structure above, no additional text.
-"""
-
-    return prompt
-
-def parse_ai_response(ai_text):
-    """Parse the AI response and extract the new descriptive format"""
-    
-    try:
-        # Try to find JSON content in the response
-        start_idx = ai_text.find('{')
-        end_idx = ai_text.rfind('}') + 1
-        
-        if start_idx != -1 and end_idx != -1:
-            json_str = ai_text[start_idx:end_idx]
-            recommendations = json.loads(json_str)
-            
-            # Validate that we have the expected structure
-            if all(key in recommendations for key in ['land_analysis', 'recommended_crops', 'market_insights']):
-                return recommendations
-            else:
-                # If structure is wrong, use fallback
-                return parse_text_response(ai_text)
-        else:
-            # If JSON parsing fails, create structured response from text
-            return parse_text_response(ai_text)
-            
-    except json.JSONDecodeError:
-        # Fallback: parse as text and structure it
-        return parse_text_response(ai_text)
-
-def parse_text_response(text):
-    """Fallback parser for non-JSON responses - creates a descriptive format"""
-    
-    # Basic text parsing as fallback with new structure
     return {
-        "land_analysis": {
-            "soil_assessment": "AI analysis available in full response below",
-            "field_condition": "Requires detailed analysis based on provided conditions",
-            "challenges": "Please refer to the full AI response for specific challenges",
-            "opportunities": "Consult full response for field opportunities"
-        },
-        "season_analysis": {
-            "current_season_suitability": "Based on current season timing",
-            "optimal_planting_window": "Seasonal recommendations in full response"
-        },
-        "market_insights": {
-            "current_trends": "Market analysis included in AI response",
-            "profitable_categories": "Refer to full response for profit analysis"
-        },
-        "recommended_crops": [
-            {
-                "name": "AI Recommended Crop",
-                "why_suitable": "Based on comprehensive AI analysis below",
-                "market_potential": "See full analysis for market details",
-                "growing_tips": "Detailed tips available in complete response",
-                "ai_full_response": text
-            }
-        ],
-        "action_plan": {
-            "immediate_steps": "Review the complete AI analysis below for actionable steps",
-            "timeline": "Detailed timeline available in full response"
-        },
-        "ai_note": "The AI provided a text response instead of structured format. Full response is available in the recommended crops section."
+        "status": "success",
+        "ai_generated": True,
+        "recommendations": recommendations,
+        "generated_at": datetime.now().isoformat(),
+        "field_location": field_data.get("location", "Unknown"),
     }
 
-def get_fallback_recommendations():
-    """Fallback recommendations when AI is not available - descriptive format"""
-    
+
+def build_crop_recommendation_prompt(field_data, weather_data=None, vegetation_data=None):
+    """Build a concise prompt for the single response schema used by the UI."""
     current_month = datetime.now().strftime("%B")
-    
+    current_year = datetime.now().year
+
+    prompt = f"""
+You are an agricultural consultant for farms in India. Recommend practical crops based
+only on the supplied field data. Do not claim access to live market data; mark market
+information as an estimate and tell the farmer to verify local prices.
+
+Date: {current_month} {current_year}
+Field data: {json.dumps(field_data, ensure_ascii=True)}
+Weather data: {json.dumps(weather_data or {}, ensure_ascii=True)}
+Vegetation data: {json.dumps(vegetation_data or {}, ensure_ascii=True)}
+
+Return only valid JSON with exactly these top-level keys:
+land_analysis, season_analysis, market_insights, recommended_crops,
+action_plan, sustainability_advice.
+Use objects for the five analysis sections and an array of three crop objects.
+Each crop object should include name, variety, why_suitable, market_potential,
+investment_needed, expected_returns, growing_tips, harvest_timeline, and risk_factors.
+Keep every value a string, number, or array of strings. Do not include markdown.
+"""
+    return prompt.strip()
+
+
+def parse_ai_response(ai_text):
+    """Parse and validate Gemini JSON without converting failures into fake AI output."""
+    if not ai_text or not ai_text.strip():
+        raise ValueError("Gemini returned an empty response")
+
+    cleaned_text = re.sub(
+        r"^```(?:json)?\s*|\s*```$", "", ai_text.strip(), flags=re.IGNORECASE
+    ).strip()
+
+    decoder = json.JSONDecoder()
+    for match in re.finditer(r"\{", cleaned_text):
+        try:
+            recommendations, _ = decoder.raw_decode(cleaned_text[match.start() :])
+        except json.JSONDecodeError:
+            continue
+
+        if _is_valid_recommendation_schema(recommendations):
+            return recommendations
+
+    raise ValueError("Gemini returned invalid recommendation JSON")
+
+
+def _is_valid_recommendation_schema(value):
+    required_keys = set(RECOMMENDATION_SCHEMA["required"])
+    if not isinstance(value, dict) or not required_keys.issubset(value):
+        return False
+
+    object_keys = (
+        "land_analysis",
+        "season_analysis",
+        "market_insights",
+        "action_plan",
+        "sustainability_advice",
+    )
+    if any(not isinstance(value[key], dict) for key in object_keys):
+        return False
+
+    crops = value["recommended_crops"]
+    return isinstance(crops, list) and all(isinstance(crop, dict) for crop in crops)
+
+
+def get_fallback_recommendations():
+    """Return a complete response in the same schema as an AI response."""
+    current_month = datetime.now().strftime("%B")
     return {
         "status": "fallback",
         "ai_generated": False,
-        "land_analysis": {
-            "soil_assessment": "Unable to perform detailed soil analysis without AI service. Please ensure your soil is well-drained and has adequate nutrients.",
-            "water_requirements": "Standard irrigation practices recommended based on crop selection.",
-            "field_condition": "Basic field preparation including plowing and leveling is essential.",
-            "challenges": "Without detailed analysis, common challenges include pest management and weather dependency.",
-            "opportunities": "Good field management can lead to profitable harvests with proper crop selection."
+        "recommendations": {
+            "land_analysis": {
+                "soil_assessment": "Test soil pH and nutrients before selecting a crop.",
+                "water_requirements": "Use irrigation appropriate for the selected crop and local water availability.",
+                "field_condition": "Prepare, level, and inspect the field before planting.",
+                "challenges": "Weather, pests, and market price changes may affect yields and returns.",
+                "opportunities": "Local crop varieties and good field management can reduce risk.",
+            },
+            "season_analysis": {
+                "current_season_suitability": f"Use crops suited to the {current_month} planting window in your region.",
+                "optimal_planting_window": "Confirm dates with the local agricultural extension office.",
+                "weather_considerations": "Monitor local forecasts before planting and applying inputs.",
+            },
+            "market_insights": {
+                "current_trends": "Verify current demand with nearby markets or agricultural extension services.",
+                "profitable_categories": "Profitability depends on local prices, yield, and input costs.",
+                "price_outlook": "No live price data is available from this fallback response.",
+                "market_timing": "Compare local prices and storage costs before selling.",
+            },
+            "recommended_crops": [
+                {
+                    "name": "Regionally adapted staple crop",
+                    "variety": "Choose a locally recommended variety.",
+                    "why_suitable": "A local variety is more likely to match regional soil and climate conditions.",
+                    "market_potential": "Verify demand and prices with local buyers.",
+                    "investment_needed": "Estimate seed, labor, fertilizer, irrigation, and pest-control costs.",
+                    "expected_returns": "Returns depend on final yield and selling price.",
+                    "growing_tips": "Follow local soil-test and crop-extension recommendations.",
+                    "harvest_timeline": "Follow the selected variety's local planting calendar.",
+                    "risk_factors": "Weather, pests, disease, and price volatility.",
+                }
+            ],
+            "action_plan": {
+                "immediate_steps": "Test soil, confirm water availability, and consult local crop guidance.",
+                "soil_preparation": "Remove weeds and prepare soil according to test results.",
+                "input_procurement": "Source certified seed and approved inputs from authorized suppliers.",
+                "timeline": "Plan weekly field checks from preparation through harvest.",
+                "success_indicators": "Track germination, plant health, water use, pests, and costs.",
+            },
+            "sustainability_advice": {
+                "organic_options": "Use compost and integrated pest management where suitable.",
+                "water_conservation": "Prefer drip or scheduled irrigation where practical.",
+                "soil_health": "Maintain organic matter and avoid unnecessary soil disturbance.",
+                "crop_rotation": "Rotate crop families to support soil health and reduce pest pressure.",
+            },
         },
-        "season_analysis": {
-            "current_season_suitability": f"{current_month} is generally suitable for season-appropriate crops",
-            "optimal_planting_window": "Follow traditional planting calendars for your region",
-            "weather_considerations": "Monitor local weather forecasts and plan accordingly"
-        },
-        "market_insights": {
-            "current_trends": "Consult local market prices and agricultural extension services",
-            "profitable_categories": "Food grains and cash crops typically show steady demand",
-            "price_outlook": "Market prices vary by region and season",
-            "market_timing": "Harvest timing affects market prices significantly"
-        },
-        "recommended_crops": [
-            {
-                "name": "Wheat (Winter Season) / Rice (Monsoon) / Sugarcane (Annual)",
-                "variety": "Local adapted varieties recommended",
-                "why_suitable": "These are generally suitable crops based on traditional farming practices",
-                "market_potential": "Stable market demand for staple crops",
-                "investment_needed": "Moderate investment for seeds, fertilizers, and irrigation",
-                "expected_returns": "Returns depend on yield and market prices",
-                "growing_tips": "Follow recommended agricultural practices for your region",
-                "harvest_timeline": "Varies by crop and planting time",
-                "risk_factors": "Weather dependency and market price fluctuations"
-            }
-        ],
-        "action_plan": {
-            "immediate_steps": "Configure AI service for detailed recommendations, consult local agricultural experts",
-            "soil_preparation": "Test soil pH and nutrients, prepare beds as per crop requirements",
-            "input_procurement": "Source quality seeds and fertilizers from authorized dealers",
-            "timeline": "Plan according to local agricultural calendar",
-            "success_indicators": "Regular monitoring of crop growth and health"
-        },
-        "sustainability_advice": {
-            "organic_options": "Consider organic certification for premium markets",
-            "water_conservation": "Adopt drip irrigation and rainwater harvesting",
-            "soil_health": "Use organic matter and cover crops to improve soil",
-            "crop_rotation": "Rotate crops to maintain soil fertility and prevent pests"
-        },
-        "note": "For AI-powered, personalized recommendations, please configure the GEMINI_API_KEY in your environment variables."
+        "error": "AI recommendations are temporarily unavailable.",
     }

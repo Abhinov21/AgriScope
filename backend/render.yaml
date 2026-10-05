@@ -5,10 +5,12 @@ services:
     region: ohio
     plan: free
     buildCommand: pip install --upgrade pip setuptools wheel && pip install -r requirements.txt
-    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 1 --timeout 120 app:app
+    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 1 --threads 2 --timeout 45 --graceful-timeout 15 app:app
     healthCheckPath: /health
     envVars:
       - key: PYTHONUNBUFFERED
         value: 1
       - key: GOOGLE_SERVICE_ACCOUNT_KEY
+        sync: false  # Set this in Render dashboard
+      - key: GEMINI_API_KEY
         sync: false  # Set this in Render dashboard
