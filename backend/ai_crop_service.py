@@ -19,12 +19,111 @@ GEMINI_TIMEOUT_MS = 30_000
 RECOMMENDATION_SCHEMA = {
     "type": "object",
     "properties": {
-        "land_analysis": {"type": "object"},
-        "season_analysis": {"type": "object"},
-        "market_insights": {"type": "object"},
-        "recommended_crops": {"type": "array"},
-        "action_plan": {"type": "object"},
-        "sustainability_advice": {"type": "object"},
+        "land_analysis": {
+            "type": "object",
+            "properties": {
+                "soil_assessment": {"type": "string"},
+                "water_requirements": {"type": "string"},
+                "field_condition": {"type": "string"},
+                "challenges": {"type": "string"},
+                "opportunities": {"type": "string"},
+            },
+            "required": [
+                "soil_assessment",
+                "water_requirements",
+                "field_condition",
+                "challenges",
+                "opportunities",
+            ],
+        },
+        "season_analysis": {
+            "type": "object",
+            "properties": {
+                "current_season_suitability": {"type": "string"},
+                "optimal_planting_window": {"type": "string"},
+                "weather_considerations": {"type": "string"},
+            },
+            "required": [
+                "current_season_suitability",
+                "optimal_planting_window",
+                "weather_considerations",
+            ],
+        },
+        "market_insights": {
+            "type": "object",
+            "properties": {
+                "current_trends": {"type": "string"},
+                "profitable_categories": {"type": "string"},
+                "price_outlook": {"type": "string"},
+                "market_timing": {"type": "string"},
+            },
+            "required": [
+                "current_trends",
+                "profitable_categories",
+                "price_outlook",
+                "market_timing",
+            ],
+        },
+        "recommended_crops": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string"},
+                    "variety": {"type": "string"},
+                    "why_suitable": {"type": "string"},
+                    "market_potential": {"type": "string"},
+                    "investment_needed": {"type": "string"},
+                    "expected_returns": {"type": "string"},
+                    "growing_tips": {"type": "string"},
+                    "harvest_timeline": {"type": "string"},
+                    "risk_factors": {"type": "string"},
+                },
+                "required": [
+                    "name",
+                    "variety",
+                    "why_suitable",
+                    "market_potential",
+                    "investment_needed",
+                    "expected_returns",
+                    "growing_tips",
+                    "harvest_timeline",
+                    "risk_factors",
+                ],
+            },
+        },
+        "action_plan": {
+            "type": "object",
+            "properties": {
+                "immediate_steps": {"type": "string"},
+                "soil_preparation": {"type": "string"},
+                "input_procurement": {"type": "string"},
+                "timeline": {"type": "string"},
+                "success_indicators": {"type": "string"},
+            },
+            "required": [
+                "immediate_steps",
+                "soil_preparation",
+                "input_procurement",
+                "timeline",
+                "success_indicators",
+            ],
+        },
+        "sustainability_advice": {
+            "type": "object",
+            "properties": {
+                "organic_options": {"type": "string"},
+                "water_conservation": {"type": "string"},
+                "soil_health": {"type": "string"},
+                "crop_rotation": {"type": "string"},
+            },
+            "required": [
+                "organic_options",
+                "water_conservation",
+                "soil_health",
+                "crop_rotation",
+            ],
+        },
     },
     "required": [
         "land_analysis",
