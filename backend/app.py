@@ -76,7 +76,11 @@ initialize_ee()
 # ✅ Flask app setup
 app = Flask(__name__)
 # CORS(app, resources={r"/process_ndvi": {"origins": "*"}})
-CORS(app)
+CORS(
+    app,
+    resources={r"/*": {"origins": "https://agriscope-frontend-new.onrender.com"}},
+    supports_credentials=True
+)
 
 # Health check endpoint for Render
 @app.route('/', methods=['GET'])
